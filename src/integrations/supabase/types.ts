@@ -14,7 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attendees: {
+        Row: {
+          checked_in_at: string | null
+          created_at: string
+          event_id: string
+          id: string
+          name: string
+          pass_code: string
+          status: string
+          ticket_type: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          name: string
+          pass_code?: string
+          status?: string
+          ticket_type?: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          name?: string
+          pass_code?: string
+          status?: string
+          ticket_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          banner_url: string | null
+          brand_color: string
+          created_at: string
+          event_date: string
+          id: string
+          name: string
+          organizer_contact: string | null
+          organizer_name: string
+          updated_at: string
+          user_id: string
+          venue: string
+        }
+        Insert: {
+          banner_url?: string | null
+          brand_color?: string
+          created_at?: string
+          event_date: string
+          id?: string
+          name: string
+          organizer_contact?: string | null
+          organizer_name: string
+          updated_at?: string
+          user_id: string
+          venue: string
+        }
+        Update: {
+          banner_url?: string | null
+          brand_color?: string
+          created_at?: string
+          event_date?: string
+          id?: string
+          name?: string
+          organizer_contact?: string | null
+          organizer_name?: string
+          updated_at?: string
+          user_id?: string
+          venue?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
