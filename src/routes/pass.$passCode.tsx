@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { verifyPass } from "@/lib/pass.functions";
 import { Header } from "@/components/Header";
 import { EventPass } from "@/components/EventPass";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
@@ -28,17 +29,11 @@ type Data = {
 function PassVerify() {
   const { passCode } = Route.useParams();
   const [data, setData] = useState<Data | null | undefined>(undefined);
+  const verify = useServerFn(verifyPass);
 
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("attendees")
-        .select("name, ticket_type, pass_code, status, events(name, event_date, venue, brand_color, organizer_name, banner_url)")
-        .eq("pass_code", passCode)
-        .maybeSingle();
-      setData(data as Data | null);
-    })();
-  }, [passCode]);
+    verify({ data: { passCode } }).then((r) => setData((r as Data | null) ?? null)).catch(() => setData(null));
+  }, [passCode, verify]);
 
   return (
     <div className="min-h-screen bg-background">
