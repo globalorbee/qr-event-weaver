@@ -4,6 +4,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: "Clash Display";
+  src: url("https://fonts.cdnfonts.com/s/53023/ClashDisplay-Variable.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("https://rsms.me/inter/font-files/Inter-roman.var.woff2?v=3.19") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /*
  * Design system definition.
  *
