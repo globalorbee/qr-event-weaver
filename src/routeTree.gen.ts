@@ -9,12 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AttendeesRouteImport } from './routes/attendees'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PassPassCodeRouteImport } from './routes/pass.$passCode'
+import { Route as GatekeeperEventIdRouteImport } from './routes/gatekeeper.$eventId'
+import { Route as EventsNewRouteImport } from './routes/events.new'
 import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
+import { Route as ApiPublicPassImagePassCodeRouteImport } from './routes/api/public/pass-image.$passCode'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -23,6 +33,11 @@ const LoginRoute = LoginRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AttendeesRoute = AttendeesRouteImport.update({
+  id: '/attendees',
+  path: '/attendees',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -35,63 +50,126 @@ const PassPassCodeRoute = PassPassCodeRouteImport.update({
   path: '/pass/$passCode',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GatekeeperEventIdRoute = GatekeeperEventIdRouteImport.update({
+  id: '/gatekeeper/$eventId',
+  path: '/gatekeeper/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsNewRoute = EventsNewRouteImport.update({
+  id: '/events/new',
+  path: '/events/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsEventIdRoute = EventsEventIdRouteImport.update({
   id: '/events/$eventId',
   path: '/events/$eventId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPassImagePassCodeRoute =
+  ApiPublicPassImagePassCodeRouteImport.update({
+    id: '/api/public/pass-image/$passCode',
+    path: '/api/public/pass-image/$passCode',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/attendees': typeof AttendeesRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/events/$eventId': typeof EventsEventIdRoute
+  '/events/new': typeof EventsNewRoute
+  '/gatekeeper/$eventId': typeof GatekeeperEventIdRoute
   '/pass/$passCode': typeof PassPassCodeRoute
+  '/api/public/pass-image/$passCode': typeof ApiPublicPassImagePassCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/attendees': typeof AttendeesRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/events/$eventId': typeof EventsEventIdRoute
+  '/events/new': typeof EventsNewRoute
+  '/gatekeeper/$eventId': typeof GatekeeperEventIdRoute
   '/pass/$passCode': typeof PassPassCodeRoute
+  '/api/public/pass-image/$passCode': typeof ApiPublicPassImagePassCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/attendees': typeof AttendeesRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/settings': typeof SettingsRoute
   '/events/$eventId': typeof EventsEventIdRoute
+  '/events/new': typeof EventsNewRoute
+  '/gatekeeper/$eventId': typeof GatekeeperEventIdRoute
   '/pass/$passCode': typeof PassPassCodeRoute
+  '/api/public/pass-image/$passCode': typeof ApiPublicPassImagePassCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/attendees'
     | '/dashboard'
     | '/login'
+    | '/settings'
     | '/events/$eventId'
+    | '/events/new'
+    | '/gatekeeper/$eventId'
     | '/pass/$passCode'
+    | '/api/public/pass-image/$passCode'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/events/$eventId' | '/pass/$passCode'
+  to:
+    | '/'
+    | '/attendees'
+    | '/dashboard'
+    | '/login'
+    | '/settings'
+    | '/events/$eventId'
+    | '/events/new'
+    | '/gatekeeper/$eventId'
+    | '/pass/$passCode'
+    | '/api/public/pass-image/$passCode'
   id:
     | '__root__'
     | '/'
+    | '/attendees'
     | '/dashboard'
     | '/login'
+    | '/settings'
     | '/events/$eventId'
+    | '/events/new'
+    | '/gatekeeper/$eventId'
     | '/pass/$passCode'
+    | '/api/public/pass-image/$passCode'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AttendeesRoute: typeof AttendeesRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  SettingsRoute: typeof SettingsRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
+  EventsNewRoute: typeof EventsNewRoute
+  GatekeeperEventIdRoute: typeof GatekeeperEventIdRoute
   PassPassCodeRoute: typeof PassPassCodeRoute
+  ApiPublicPassImagePassCodeRoute: typeof ApiPublicPassImagePassCodeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -104,6 +182,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/attendees': {
+      id: '/attendees'
+      path: '/attendees'
+      fullPath: '/attendees'
+      preLoaderRoute: typeof AttendeesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -120,6 +205,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PassPassCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gatekeeper/$eventId': {
+      id: '/gatekeeper/$eventId'
+      path: '/gatekeeper/$eventId'
+      fullPath: '/gatekeeper/$eventId'
+      preLoaderRoute: typeof GatekeeperEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events/new': {
+      id: '/events/new'
+      path: '/events/new'
+      fullPath: '/events/new'
+      preLoaderRoute: typeof EventsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/events/$eventId': {
       id: '/events/$eventId'
       path: '/events/$eventId'
@@ -127,26 +226,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsEventIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/pass-image/$passCode': {
+      id: '/api/public/pass-image/$passCode'
+      path: '/api/public/pass-image/$passCode'
+      fullPath: '/api/public/pass-image/$passCode'
+      preLoaderRoute: typeof ApiPublicPassImagePassCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AttendeesRoute: AttendeesRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  SettingsRoute: SettingsRoute,
   EventsEventIdRoute: EventsEventIdRoute,
+  EventsNewRoute: EventsNewRoute,
+  GatekeeperEventIdRoute: GatekeeperEventIdRoute,
   PassPassCodeRoute: PassPassCodeRoute,
+  ApiPublicPassImagePassCodeRoute: ApiPublicPassImagePassCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

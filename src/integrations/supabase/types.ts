@@ -22,6 +22,7 @@ export type Database = {
           id: string
           name: string
           pass_code: string
+          signature: string | null
           status: string
           ticket_type: string
         }
@@ -32,6 +33,7 @@ export type Database = {
           id?: string
           name: string
           pass_code?: string
+          signature?: string | null
           status?: string
           ticket_type?: string
         }
@@ -42,6 +44,7 @@ export type Database = {
           id?: string
           name?: string
           pass_code?: string
+          signature?: string | null
           status?: string
           ticket_type?: string
         }
@@ -65,6 +68,8 @@ export type Database = {
           name: string
           organizer_contact: string | null
           organizer_name: string
+          private_key: string | null
+          public_key: string | null
           updated_at: string
           user_id: string
           venue: string
@@ -78,6 +83,8 @@ export type Database = {
           name: string
           organizer_contact?: string | null
           organizer_name: string
+          private_key?: string | null
+          public_key?: string | null
           updated_at?: string
           user_id: string
           venue: string
@@ -91,6 +98,8 @@ export type Database = {
           name?: string
           organizer_contact?: string | null
           organizer_name?: string
+          private_key?: string | null
+          public_key?: string | null
           updated_at?: string
           user_id?: string
           venue?: string
