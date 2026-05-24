@@ -2,17 +2,19 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
+import { AppLayout } from "@/components/AppLayout";
 import { EventPass } from "@/components/EventPass";
+import { WalletButtons } from "@/components/WalletButtons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Download, Trash2, ArrowLeft, Upload, Check, X, Share2, FileText, ImageIcon } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Upload, Check, X, Share2, FileText, ImageIcon, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
+import { useCurrentEvent } from "@/stores/use-current-event";
 
 export const Route = createFileRoute("/events/$eventId")({
   head: () => ({ meta: [{ title: "Event — Passly" }] }),
@@ -28,6 +30,8 @@ type Event = {
   organizer_name: string;
   organizer_contact: string | null;
   banner_url: string | null;
+  public_key?: string | null;
+  private_key?: string | null;
 };
 type Attendee = {
   id: string;
@@ -48,6 +52,7 @@ function EventDetail() {
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [previewing, setPreviewing] = useState<Attendee | null>(null);
+  const setCurrent = useCurrentEvent((s) => s.setCurrent);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -56,6 +61,7 @@ function EventDetail() {
   const load = async () => {
     const { data: ev } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();
     setEvent(ev as Event);
+    if (ev) setCurrent({ id: ev.id, name: ev.name, brand_color: ev.brand_color });
     const { data: ats } = await supabase
       .from("attendees")
       .select("*")
@@ -111,12 +117,11 @@ function EventDetail() {
     navigate({ to: "/dashboard" });
   };
 
-  if (!event) return <div className="min-h-screen bg-background"><Header /></div>;
+  if (!event) return <AppLayout title="Event"><div className="p-10 text-sm text-muted-foreground">Loading…</div></AppLayout>;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="mx-auto max-w-7xl px-6 py-10">
+    <AppLayout title={event.name}>
+      <main className="mx-auto max-w-7xl px-6 py-8">
         <Link to="/dashboard" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
@@ -128,6 +133,9 @@ function EventDetail() {
             <p className="mt-1 text-sm text-muted-foreground">{event.venue} · {new Date(event.event_date).toLocaleString()}</p>
           </div>
           <div className="flex gap-2">
+            <Link to="/gatekeeper/$eventId" params={{ eventId: event.id }}>
+              <Button variant="outline"><ScanLine className="mr-2 h-4 w-4" />Gatekeeper</Button>
+            </Link>
             <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
               <DialogTrigger asChild><Button variant="outline"><Upload className="mr-2 h-4 w-4" />Bulk add</Button></DialogTrigger>
               <BulkDialog onSubmit={async (t) => { await bulkAdd(t); setBulkOpen(false); }} />
@@ -199,7 +207,7 @@ function EventDetail() {
           )}
         </Dialog>
       </main>
-    </div>
+    </AppLayout>
   );
 }
 
@@ -252,6 +260,9 @@ function PassPreview({ event, attendee }: { event: Event; attendee: Attendee }) 
     passCode: attendee.pass_code,
     bannerUrl: event.banner_url,
     status: attendee.status,
+    eventId: event.id,
+    attendeeId: attendee.id,
+    privateKey: event.private_key,
   };
 
   const downloadPng = async () => {
@@ -283,11 +294,14 @@ function PassPreview({ event, attendee }: { event: Event; attendee: Attendee }) 
       <div className="flex justify-center py-4">
         <EventPass data={data} innerRef={ref} />
       </div>
-      <DialogFooter className="!justify-center gap-2 sm:!justify-center">
-        <Button variant="outline" onClick={downloadPng}><ImageIcon className="mr-2 h-4 w-4" />PNG</Button>
-        <Button variant="outline" onClick={downloadPdf}><FileText className="mr-2 h-4 w-4" />PDF</Button>
-        <Button variant="outline" onClick={share}><Share2 className="mr-2 h-4 w-4" />Share</Button>
-      </DialogFooter>
+      <div className="space-y-3">
+        <div className="flex justify-center gap-2">
+          <Button variant="outline" size="sm" onClick={downloadPng}><ImageIcon className="mr-2 h-4 w-4" />PNG</Button>
+          <Button variant="outline" size="sm" onClick={downloadPdf}><FileText className="mr-2 h-4 w-4" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={share}><Share2 className="mr-2 h-4 w-4" />Share</Button>
+        </div>
+        <WalletButtons />
+      </div>
     </DialogContent>
   );
 }

@@ -15,6 +15,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AttendeesRouteImport } from './routes/attendees'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PassPassCodeRouteImport } from './routes/pass.$passCode'
+import { Route as GatekeeperEventIdRouteImport } from './routes/gatekeeper.$eventId'
 import { Route as EventsNewRouteImport } from './routes/events.new'
 import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
 
@@ -48,6 +49,11 @@ const PassPassCodeRoute = PassPassCodeRouteImport.update({
   path: '/pass/$passCode',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GatekeeperEventIdRoute = GatekeeperEventIdRouteImport.update({
+  id: '/gatekeeper/$eventId',
+  path: '/gatekeeper/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsNewRoute = EventsNewRouteImport.update({
   id: '/events/new',
   path: '/events/new',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
+  '/gatekeeper/$eventId': typeof GatekeeperEventIdRoute
   '/pass/$passCode': typeof PassPassCodeRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
+  '/gatekeeper/$eventId': typeof GatekeeperEventIdRoute
   '/pass/$passCode': typeof PassPassCodeRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
+  '/gatekeeper/$eventId': typeof GatekeeperEventIdRoute
   '/pass/$passCode': typeof PassPassCodeRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/events/$eventId'
     | '/events/new'
+    | '/gatekeeper/$eventId'
     | '/pass/$passCode'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/events/$eventId'
     | '/events/new'
+    | '/gatekeeper/$eventId'
     | '/pass/$passCode'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/events/$eventId'
     | '/events/new'
+    | '/gatekeeper/$eventId'
     | '/pass/$passCode'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
   EventsNewRoute: typeof EventsNewRoute
+  GatekeeperEventIdRoute: typeof GatekeeperEventIdRoute
   PassPassCodeRoute: typeof PassPassCodeRoute
 }
 
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PassPassCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gatekeeper/$eventId': {
+      id: '/gatekeeper/$eventId'
+      path: '/gatekeeper/$eventId'
+      fullPath: '/gatekeeper/$eventId'
+      preLoaderRoute: typeof GatekeeperEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/events/new': {
       id: '/events/new'
       path: '/events/new'
@@ -203,8 +223,19 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   EventsEventIdRoute: EventsEventIdRoute,
   EventsNewRoute: EventsNewRoute,
+  GatekeeperEventIdRoute: GatekeeperEventIdRoute,
   PassPassCodeRoute: PassPassCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
