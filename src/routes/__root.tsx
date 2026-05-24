@@ -78,11 +78,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Passly — Branded QR Event Passes in Minutes" },
       { name: "description", content: "Create branded event passes with scannable QR codes. Manage events, attendees, and check-ins effortlessly." },
       { name: "author", content: "Passly" },
-      { property: "og:title", content: "Passly — Branded QR Event Passes" },
-      { property: "og:description", content: "Create branded event passes with scannable QR codes." },
+      { property: "og:title", content: "Passly — Branded QR Event Passes in Minutes" },
+      { property: "og:description", content: "Create branded event passes with scannable QR codes. Manage events, attendees, and check-ins effortlessly." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Passly — Branded QR Event Passes in Minutes" },
+      { name: "twitter:description", content: "Create branded event passes with scannable QR codes. Manage events, attendees, and check-ins effortlessly." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/44e96f56-3a32-4450-bb9c-b5cb9587503e/id-preview-289b88a4--ae75c525-07ec-4065-9339-3f899dd618b6.lovable.app-1779644686126.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/44e96f56-3a32-4450-bb9c-b5cb9587503e/id-preview-289b88a4--ae75c525-07ec-4065-9339-3f899dd618b6.lovable.app-1779644686126.png" },
     ],
     links: [
       {
