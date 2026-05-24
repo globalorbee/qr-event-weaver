@@ -2,15 +2,10 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
+import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Calendar, MapPin, Users, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Passly" }] }),
@@ -33,7 +28,6 @@ function Dashboard() {
   const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -60,20 +54,16 @@ function Dashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="mx-auto max-w-7xl px-6 py-10">
+    <AppLayout title="Events">
+      <main className="mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight">Your events</h1>
             <p className="mt-1 text-sm text-muted-foreground">Manage events and issue passes.</p>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" />New event</Button>
-            </DialogTrigger>
-            <NewEventDialog onCreated={() => { setOpen(false); load(); }} />
-          </Dialog>
+          <Link to="/events/new">
+            <Button><Plus className="mr-2 h-4 w-4" />New event</Button>
+          </Link>
         </div>
 
         {events.length === 0 ? (
@@ -83,6 +73,9 @@ function Dashboard() {
             </div>
             <h3 className="font-display text-xl font-semibold">No events yet</h3>
             <p className="mt-1 text-sm text-muted-foreground">Create your first event to start issuing passes.</p>
+            <Link to="/events/new" className="mt-4 inline-block">
+              <Button className="mt-4"><Plus className="mr-2 h-4 w-4" />Create event</Button>
+            </Link>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -111,75 +104,6 @@ function Dashboard() {
           </div>
         )}
       </main>
-    </div>
-  );
-}
-
-function NewEventDialog({ onCreated }: { onCreated: () => void }) {
-  const { user } = useAuth();
-  const [form, setForm] = useState({
-    name: "",
-    event_date: "",
-    venue: "",
-    brand_color: "#ed2100",
-    organizer_name: "",
-    organizer_contact: "",
-    banner_url: "",
-  });
-  const [busy, setBusy] = useState(false);
-
-  const submit = async () => {
-    if (!user) return;
-    if (!form.name || !form.event_date || !form.venue || !form.organizer_name) {
-      toast.error("Fill required fields");
-      return;
-    }
-    setBusy(true);
-    const { error } = await supabase.from("events").insert({
-      user_id: user.id,
-      name: form.name,
-      event_date: new Date(form.event_date).toISOString(),
-      venue: form.venue,
-      brand_color: form.brand_color,
-      organizer_name: form.organizer_name,
-      organizer_contact: form.organizer_contact || null,
-      banner_url: form.banner_url || null,
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Event created");
-    onCreated();
-  };
-
-  return (
-    <DialogContent className="max-w-lg">
-      <DialogHeader><DialogTitle>Create event</DialogTitle></DialogHeader>
-      <div className="grid gap-4">
-        <Field label="Event name *"><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
-        <Field label="Date & time *"><Input type="datetime-local" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} /></Field>
-        <Field label="Venue / location *"><Input value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} /></Field>
-        <Field label="Organizer name *"><Input value={form.organizer_name} onChange={(e) => setForm({ ...form, organizer_name: e.target.value })} /></Field>
-        <Field label="Organizer contact (email/phone)"><Input value={form.organizer_contact} onChange={(e) => setForm({ ...form, organizer_contact: e.target.value })} /></Field>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Brand color">
-            <div className="flex gap-2">
-              <Input type="color" className="h-10 w-14 cursor-pointer p-1" value={form.brand_color} onChange={(e) => setForm({ ...form, brand_color: e.target.value })} />
-              <Input value={form.brand_color} onChange={(e) => setForm({ ...form, brand_color: e.target.value })} />
-            </div>
-          </Field>
-          <Field label="Banner image URL"><Input placeholder="https://…" value={form.banner_url} onChange={(e) => setForm({ ...form, banner_url: e.target.value })} /></Field>
-        </div>
-      </div>
-      <DialogFooter><Button onClick={submit} disabled={busy}>Create event</Button></DialogFooter>
-    </DialogContent>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
-      {children}
-    </div>
+    </AppLayout>
   );
 }
