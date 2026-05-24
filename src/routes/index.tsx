@@ -53,7 +53,7 @@ function Index() {
                 <EventPass
                   data={{
                     eventName: "Designers Meetup '26",
-                    eventDate: new Date(Date.now() + 7 * 86400000).toISOString(),
+                    eventDate: "2026-06-15T19:00:00.000Z",
                     venue: "The Wing, NYC",
                     attendeeName: "Alex Rivera",
                     ticketType: "VIP",
