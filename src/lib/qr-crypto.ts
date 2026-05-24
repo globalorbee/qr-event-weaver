@@ -4,7 +4,7 @@ import * as ed from "@noble/ed25519";
 import { sha512 } from "@noble/hashes/sha2.js";
 
 // Required by @noble/ed25519 v3 in non-Node environments
-ed.hashes.sha512 = (msg: Uint8Array) => sha512(msg);
+ed.hashes.sha512 = ((msg: Uint8Array) => sha512(msg)) as typeof ed.hashes.sha512;
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
