@@ -1,10 +1,15 @@
 // Isomorphic Ed25519 signing/verification helpers.
 // @noble/ed25519 works in both the browser and the Worker runtime.
 import * as ed from "@noble/ed25519";
-import { sha512 } from "@noble/hashes/sha2.js";
 
-// Required by @noble/ed25519 v3 in non-Node environments
-ed.hashes.sha512 = ((msg: Uint8Array) => sha512(msg)) as typeof ed.hashes.sha512;
+// Provide a sync sha512 via WebCrypto for @noble/ed25519 v3.
+// Browser + Cloudflare Workers both expose crypto.subtle.digest.
+// We expose async variants below and never call the sync `hashes.sha512`,
+// but the type slot must be filled for some code paths.
+ed.hashes.sha512Async = async (msg: Uint8Array) => {
+  const buf = await crypto.subtle.digest("SHA-512", msg as unknown as ArrayBuffer);
+  return new Uint8Array(buf);
+};
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
