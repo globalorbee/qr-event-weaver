@@ -111,7 +111,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_event_public_key: { Args: { _event_id: string }; Returns: string }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

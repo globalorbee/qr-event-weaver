@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.get_event_public_key(uuid);
