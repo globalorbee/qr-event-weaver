@@ -36,30 +36,31 @@ function PassVerify() {
   }, [passCode, verify]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black text-white">
       <Header />
       <main className="mx-auto flex max-w-md flex-col items-center px-6 py-12">
-        {data === undefined && <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />}
+        {data === undefined && <Loader2 className="h-8 w-8 animate-spin text-white/50" />}
         {data === null && (
-          <div className="rounded-2xl border border-border bg-card p-10 text-center">
-            <XCircle className="mx-auto h-12 w-12 text-destructive" />
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
+            <XCircle className="mx-auto h-12 w-12 text-red-400" />
             <h2 className="mt-4 font-display text-2xl font-semibold">Invalid pass</h2>
-            <p className="mt-2 text-sm text-muted-foreground">This pass code doesn't exist.</p>
+            <p className="mt-2 text-sm text-white/60">This pass code doesn't exist.</p>
           </div>
         )}
         {data && data.events && (
           <>
             <div
-              className={`mb-6 flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium ${
+              className="mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium"
+              style={
                 data.status === "used"
-                  ? "border-muted bg-muted text-muted-foreground"
-                  : "border-primary/40 bg-primary/10 text-primary"
-              }`}
+                  ? { borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.6)" }
+                  : { borderColor: "rgba(79,57,246,0.4)", backgroundColor: "rgba(79,57,246,0.12)", color: "#a99cff" }
+              }
             >
               {data.status === "used" ? (
-                <><XCircle className="h-4 w-4" /> Already used</>
+                <><XCircle className="h-4 w-4" /> Already checked in</>
               ) : (
-                <><CheckCircle2 className="h-4 w-4" /> Valid pass</>
+                <><CheckCircle2 className="h-4 w-4" /> Pass valid</>
               )}
             </div>
             <EventPass
