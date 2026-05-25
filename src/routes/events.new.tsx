@@ -29,25 +29,39 @@ const PRESET_FONTS = [
 
 const schema = z.object({
   name: z.string().trim().min(2, "Name too short").max(120),
+  event_type: z.string().min(1),
   event_date: z.string().min(1, "Pick a date"),
   venue: z.string().trim().min(2).max(200),
   organizer_name: z.string().trim().min(2).max(120),
   brand_color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   attendee_name: z.string().trim().min(2).max(80),
+  attendee_email: z.string().trim().email().max(200).optional().or(z.literal("")),
   ticket_type: z.string().trim().min(1).max(40),
 });
+
+const EVENT_TYPES = [
+  { value: "wedding", label: "Wedding" },
+  { value: "workshop", label: "Workshop" },
+  { value: "conference", label: "Conference" },
+  { value: "meetup", label: "Meetup" },
+  { value: "seminar", label: "Seminar" },
+  { value: "private_gathering", label: "Private gathering" },
+  { value: "other", label: "Other" },
+];
 
 function NewEvent() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
+    event_type: "meetup",
     event_date: "",
     venue: "",
     organizer_name: "",
-    brand_color: "#ed2100",
+    brand_color: "#4F39F6",
     banner_url: "",
     attendee_name: "Jane Attendee",
+    attendee_email: "",
     ticket_type: "General",
     attendee_font: "",
   });
@@ -111,6 +125,7 @@ function NewEvent() {
         .insert({
           user_id: user.id,
           name: form.name,
+          event_type: form.event_type,
           event_date: new Date(form.event_date).toISOString(),
           venue: form.venue,
           brand_color: form.brand_color,
@@ -127,6 +142,7 @@ function NewEvent() {
         event_id: ev.id,
         name: form.attendee_name,
         ticket_type: form.ticket_type,
+        email: form.attendee_email || null,
       });
       toast.success("Event created with keypair");
       navigate({ to: "/events/$eventId", params: { eventId: ev.id } });
@@ -153,6 +169,16 @@ function NewEvent() {
             <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Event</h3>
             <Field label="Event name" error={errors.name}>
               <Input value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="Designers Meetup '26" />
+            </Field>
+            <Field label="Event type" error={errors.event_type}>
+              <Select value={form.event_type} onValueChange={(v) => setField("event_type", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {EVENT_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Date & time" error={errors.event_date}>
@@ -208,6 +234,9 @@ function NewEvent() {
                 <Input value={form.ticket_type} onChange={(e) => setField("ticket_type", e.target.value)} />
               </Field>
             </div>
+            <Field label="Attendee email (optional — pass is emailed to them)" error={errors.attendee_email}>
+              <Input type="email" value={form.attendee_email} onChange={(e) => setField("attendee_email", e.target.value)} placeholder="jane@example.com" />
+            </Field>
           </section>
 
           <Button size="lg" disabled={busy} onClick={submit}>

@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           checked_in_at: string | null
           created_at: string
+          email: string | null
           event_id: string
           id: string
           name: string
@@ -29,6 +30,7 @@ export type Database = {
         Insert: {
           checked_in_at?: string | null
           created_at?: string
+          email?: string | null
           event_id: string
           id?: string
           name: string
@@ -40,6 +42,7 @@ export type Database = {
         Update: {
           checked_in_at?: string | null
           created_at?: string
+          email?: string | null
           event_id?: string
           id?: string
           name?: string
@@ -64,6 +67,7 @@ export type Database = {
           brand_color: string
           created_at: string
           event_date: string
+          event_type: string
           id: string
           name: string
           organizer_contact: string | null
@@ -79,6 +83,7 @@ export type Database = {
           brand_color?: string
           created_at?: string
           event_date: string
+          event_type?: string
           id?: string
           name: string
           organizer_contact?: string | null
@@ -94,6 +99,7 @@ export type Database = {
           brand_color?: string
           created_at?: string
           event_date?: string
+          event_type?: string
           id?: string
           name?: string
           organizer_contact?: string | null
