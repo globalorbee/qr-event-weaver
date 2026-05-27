@@ -9,7 +9,7 @@ import { encodeSignedPass, signPayload } from "@/lib/qr-crypto";
 export const Route = createFileRoute("/api/public/pass-image/$passCode")({
   server: {
     handlers: {
-      GET: async ({ params }) => {
+      GET: async ({ params, request }) => {
         const passCode = String(params.passCode || "").slice(0, 64);
         if (!/^[a-f0-9]{8,64}$/i.test(passCode)) {
           return new Response("bad code", { status: 400 });
