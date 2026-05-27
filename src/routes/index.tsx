@@ -23,7 +23,7 @@ function Index() {
                 "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(79,57,246,0.35), transparent 60%)",
             }}
           />
-          <div className="mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-2 lg:py-32">
+          <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:px-6 lg:grid-cols-2 lg:py-32">
             <div className="flex flex-col justify-center">
               <span className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
                 <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "#4F39F6" }} />
@@ -39,7 +39,7 @@ function Index() {
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link to="/login">
-                  <Button size="lg" className="gap-2" style={{ backgroundColor: "#4F39F6", color: "#fff" }}>
+                  <Button size="lg" className="gap-2">
                     Start free <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -50,8 +50,8 @@ function Index() {
                 </a>
               </div>
             </div>
-            <div className="flex items-center justify-center">
-              <div className="rotate-3 transition-transform hover:rotate-0">
+            <div className="flex min-w-0 items-center justify-center overflow-hidden px-1 sm:px-0">
+              <div className="w-full max-w-[360px] origin-center rotate-2 transition-transform hover:rotate-0 max-[390px]:scale-[0.88] max-[340px]:scale-[0.78] sm:rotate-3">
                 <EventPass
                   data={{
                     eventName: "Designers Meetup '26",
@@ -75,7 +75,7 @@ function Index() {
           <div className="mx-auto max-w-7xl px-6 py-20">
             <h2 className="font-display text-3xl font-semibold md:text-4xl">Everything an organizer needs.</h2>
             <p className="mt-3 max-w-xl text-white/60">
-              From small private gatherings to large conferences — Passly scales without the overhead.
+              From small private gatherings to large conferences — Peras scales without the overhead.
             </p>
             <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {[
@@ -98,7 +98,7 @@ function Index() {
 
         <footer className="border-t border-white/10 bg-black">
           <div className="mx-auto max-w-7xl px-6 py-8 text-center text-sm text-white/50">
-            © {new Date().getFullYear()} Passly. Built for organizers.
+            © {new Date().getFullYear()} Peras. Built for organizers.
           </div>
         </footer>
       </main>
