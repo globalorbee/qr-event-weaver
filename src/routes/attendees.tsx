@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/attendees")({
-  head: () => ({ meta: [{ title: "Attendees — Passly" }] }),
+  head: () => ({ meta: [{ title: "Attendees — Peras" }] }),
   component: AttendeesPage,
 });
 

@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import QRCode from "qrcode";
+import { encodeSignedPass, signPayload } from "@/lib/qr-crypto";
 
 // Returns an SVG event pass that always reflects the latest event details.
 // Since the URL is keyed by passCode (immutable), updates to event name,
@@ -7,7 +9,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const Route = createFileRoute("/api/public/pass-image/$passCode")({
   server: {
     handlers: {
-      GET: async ({ params }) => {
+      GET: async ({ params, request }) => {
         const passCode = String(params.passCode || "").slice(0, 64);
         if (!/^[a-f0-9]{8,64}$/i.test(passCode)) {
           return new Response("bad code", { status: 400 });
@@ -15,7 +17,7 @@ export const Route = createFileRoute("/api/public/pass-image/$passCode")({
 
         const { data } = await supabaseAdmin
           .from("attendees")
-          .select("name, ticket_type, pass_code, status, events(name, event_date, venue, brand_color, organizer_name)")
+          .select("id, event_id, name, ticket_type, pass_code, signature, status, events(name, event_date, venue, brand_color, organizer_name, private_key)")
           .eq("pass_code", passCode)
           .maybeSingle();
 
@@ -24,10 +26,27 @@ export const Route = createFileRoute("/api/public/pass-image/$passCode")({
         }
 
         const ev = data.events as {
-          name: string; event_date: string; venue: string; brand_color: string; organizer_name: string;
+          name: string; event_date: string; venue: string; brand_color: string; organizer_name: string; private_key?: string | null;
         };
         const date = new Date(ev.event_date);
         const dateStr = date.toUTCString().slice(0, 22);
+        const signature = data.signature ?? (ev.private_key
+          ? await signPayload({ a: data.id, e: data.event_id, t: data.ticket_type, c: data.pass_code }, ev.private_key)
+          : null);
+        if (signature && !data.signature) {
+          await supabaseAdmin.from("attendees").update({ signature }).eq("id", data.id);
+        }
+        const qrPayload = signature
+          ? encodeSignedPass({ a: data.id, e: data.event_id, t: data.ticket_type, c: data.pass_code, s: signature })
+          : `${new URL(request.url).origin}/pass/${data.pass_code}`;
+        const qrSvg = await QRCode.toString(qrPayload, {
+          type: "svg",
+          errorCorrectionLevel: "H",
+          margin: 1,
+          width: 240,
+          color: { dark: "#000000", light: "#ffffff" },
+        });
+        const qrImage = `data:image/svg+xml;base64,${btoa(qrSvg)}`;
 
         const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="1080" viewBox="0 0 720 1080">
@@ -56,6 +75,9 @@ export const Route = createFileRoute("/api/public/pass-image/$passCode")({
 
   <text x="40" y="760" font-family="sans-serif" font-size="18" fill="#999">Organized by</text>
   <text x="40" y="790" font-family="sans-serif" font-size="22" fill="#fff">${escapeXml(ev.organizer_name)}</text>
+
+  <rect x="240" y="830" width="240" height="240" rx="18" fill="#ffffff"/>
+  <image x="252" y="842" width="216" height="216" href="${qrImage}"/>
 
   <text x="40" y="1020" font-family="monospace" font-size="14" fill="#666">${escapeXml(passCode)}</text>
   <text x="40" y="1050" font-family="sans-serif" font-size="14" fill="${data.status === "used" ? "#666" : escapeXml(ev.brand_color)}">${data.status === "used" ? "USED" : "VALID"}</text>

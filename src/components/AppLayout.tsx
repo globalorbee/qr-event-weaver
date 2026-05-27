@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Calendar, Users, Settings, QrCode, LogOut, ScanLine } from "lucide-react";
+import { Calendar, Users, Settings, LogOut, ScanLine } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +17,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useCurrentEvent } from "@/stores/use-current-event";
+import { PerasLogo } from "@/components/PerasLogo";
 
 const items = [
   { title: "Events", url: "/dashboard", icon: Calendar },
@@ -35,9 +36,9 @@ function AppSidebar() {
       <SidebarHeader>
         <Link to="/dashboard" className="flex items-center gap-2 px-2 py-1.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-            <QrCode className="h-4 w-4 text-primary-foreground" />
+            <PerasLogo className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-display text-lg font-semibold tracking-tight group-data-[collapsible=icon]:hidden">Passly</span>
+          <span className="font-display text-lg font-semibold tracking-tight group-data-[collapsible=icon]:hidden">Peras</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

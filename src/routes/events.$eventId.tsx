@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -25,9 +26,10 @@ import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { useCurrentEvent } from "@/stores/use-current-event";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { createAttendeePass, createBulkAttendeePasses } from "@/lib/pass.functions";
 
 export const Route = createFileRoute("/events/$eventId")({
-  head: () => ({ meta: [{ title: "Event — Passly" }] }),
+  head: () => ({ meta: [{ title: "Event — Peras" }] }),
   component: EventDetail,
 });
 
@@ -54,6 +56,7 @@ type Attendee = {
   status: "unused" | "used";
   checked_in_at: string | null;
   created_at: string;
+  signature: string | null;
 };
 
 type ViewMode = "table" | "grid" | "list";
@@ -72,6 +75,8 @@ function EventDetail() {
   const [statusFilter, setStatusFilter] = useState<"all" | "used" | "unused">("all");
   const [ticketFilter, setTicketFilter] = useState<string>("all");
   const setCurrent = useCurrentEvent((s) => s.setCurrent);
+  const createOnePass = useServerFn(createAttendeePass);
+  const createManyPasses = useServerFn(createBulkAttendeePasses);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -150,15 +155,15 @@ function EventDetail() {
   };
 
   const addAttendee = async (name: string, ticket: string, email: string) => {
-    const { data, error } = await supabase
-      .from("attendees")
-      .insert({ event_id: eventId, name, ticket_type: ticket || "General", email: email || null })
-      .select()
-      .single();
-    if (error) return toast.error(error.message);
+    let data: Attendee;
+    try {
+      data = await createOnePass({ data: { eventId, name, ticketType: ticket || "General", email: email || null } }) as Attendee;
+    } catch (e) {
+      return toast.error(e instanceof Error ? e.message : "Could not create attendee");
+    }
     toast.success("Attendee added");
     loadAttendees();
-    if (email && data) {
+    if (email) {
       sendIssuedEmail(data as Attendee).then(() => toast.success("Pass emailed to attendee"));
     }
   };
@@ -170,13 +175,17 @@ function EventDetail() {
         const parts = r.split(",").map((s) => s?.trim());
         const name = parts[0];
         const email = parts[1] && parts[1].includes("@") ? parts[1] : null;
-        return name ? { event_id: eventId, name, ticket_type: sharedTicket || "General", email } : null;
+        return name ? { name, email } : null;
       })
-      .filter(Boolean) as Array<{ event_id: string; name: string; ticket_type: string; email: string | null }>;
+      .filter(Boolean) as Array<{ name: string; email: string | null }>;
 
     if (!records.length) return toast.error("No valid rows. Use: Name, email (per line)");
-    const { data, error } = await supabase.from("attendees").insert(records).select();
-    if (error) return toast.error(error.message);
+    let data: Attendee[];
+    try {
+      data = await createManyPasses({ data: { eventId, attendees: records, ticketType: sharedTicket || "General" } }) as Attendee[];
+    } catch (e) {
+      return toast.error(e instanceof Error ? e.message : "Could not create attendees");
+    }
     toast.success(`${records.length} attendees added`);
     loadAttendees();
     // Send emails to those with addresses
@@ -585,6 +594,9 @@ function PassPreview({ event, attendee, onEmail }: { event: Event; attendee: Att
     eventId: event.id,
     attendeeId: attendee.id,
     privateKey: event.private_key,
+    signedPayload: attendee.signature
+      ? { a: attendee.id, e: event.id, t: attendee.ticket_type, c: attendee.pass_code, s: attendee.signature }
+      : null,
   };
 
   const downloadPng = async () => {

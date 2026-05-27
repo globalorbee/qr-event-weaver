@@ -7,7 +7,7 @@ import { EventPass } from "@/components/EventPass";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/pass/$passCode")({
-  head: () => ({ meta: [{ title: "Verify Pass — Passly" }] }),
+  head: () => ({ meta: [{ title: "Verify Pass — Peras" }] }),
   component: PassVerify,
 });
 

@@ -11,7 +11,7 @@ import { Check, X, AlertTriangle, WifiOff, Wifi, ArrowLeft } from "lucide-react"
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/gatekeeper/$eventId")({
-  head: () => ({ meta: [{ title: "Gatekeeper — Passly" }] }),
+  head: () => ({ meta: [{ title: "Gatekeeper — Peras" }] }),
   component: Gatekeeper,
 });
 
