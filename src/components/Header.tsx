@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { QrCode, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { PerasLogo } from "@/components/PerasLogo";
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -11,10 +12,10 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-black/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md" style={{ backgroundColor: "#4F39F6" }}>
-            <QrCode className="h-5 w-5 text-white" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <PerasLogo className="h-5 w-5" />
           </div>
-          <span className="font-display text-lg font-semibold tracking-tight text-white">Passly</span>
+          <span className="font-display text-lg font-semibold tracking-tight text-white">Peras</span>
         </Link>
         <nav className="flex items-center gap-2">
           {user ? (
@@ -36,7 +37,7 @@ export function Header() {
             </>
           ) : (
             <Link to="/login">
-              <Button size="sm" style={{ backgroundColor: "#4F39F6", color: "#fff" }}>Sign in</Button>
+              <Button size="sm">Sign in</Button>
             </Link>
           )}
         </nav>
