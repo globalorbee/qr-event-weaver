@@ -27,7 +27,7 @@ import { useCurrentEvent } from "@/stores/use-current-event";
 import { sendTransactionalEmail } from "@/lib/email/send";
 
 export const Route = createFileRoute("/events/$eventId")({
-  head: () => ({ meta: [{ title: "Event — Passly" }] }),
+  head: () => ({ meta: [{ title: "Event — Peras" }] }),
   component: EventDetail,
 });
 

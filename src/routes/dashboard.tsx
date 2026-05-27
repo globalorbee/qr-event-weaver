@@ -8,7 +8,7 @@ import { Plus, Calendar, MapPin, Users, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Passly" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Peras" }] }),
   component: Dashboard,
 });
 

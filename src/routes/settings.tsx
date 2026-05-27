@@ -6,7 +6,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Settings — Passly" }] }),
+  head: () => ({ meta: [{ title: "Settings — Peras" }] }),
   component: SettingsPage,
 });
 

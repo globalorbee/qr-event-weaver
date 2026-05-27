@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 export const Route = createFileRoute("/events/new")({
-  head: () => ({ meta: [{ title: "New event — Passly" }] }),
+  head: () => ({ meta: [{ title: "New event — Peras" }] }),
   component: NewEvent,
 });
 
