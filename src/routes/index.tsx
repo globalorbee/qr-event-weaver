@@ -50,7 +50,7 @@ function Index() {
                 </a>
               </div>
             </div>
-            <div className="flex min-w-0 items-center justify-center overflow-hidden px-1 sm:px-0">
+            <div className="flex min-w-0 items-center justify-center px-1 py-8 sm:px-0 sm:py-12">
               <div className="w-full max-w-[360px] origin-center rotate-2 transition-transform hover:rotate-0 sm:rotate-3">
                 <EventPass
                   data={{
