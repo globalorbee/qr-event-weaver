@@ -656,3 +656,81 @@ function PassPreview({ event, attendee, onEmail }: { event: Event; attendee: Att
     </DialogContent>
   );
 }
+type Token = { id: string; token: string; label: string; revoked: boolean; expires_at: string | null; created_at: string };
+
+function ShareGatekeeperDialog({ eventId }: { eventId: string }) {
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [label, setLabel] = useState("Front door");
+  const { user } = useAuth();
+
+  const load = async () => {
+    const { data } = await supabase
+      .from("gatekeeper_tokens")
+      .select("id,token,label,revoked,expires_at,created_at")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: false });
+    setTokens((data as Token[]) ?? []);
+  };
+
+  useEffect(() => { load(); }, [eventId]);
+
+  const create = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("gatekeeper_tokens")
+      .insert({ event_id: eventId, label: label || "Gatekeeper", created_by: user.id });
+    if (error) return toast.error(error.message);
+    toast.success("Share link created");
+    setLabel("Front door");
+    load();
+  };
+
+  const revoke = async (id: string, revoked: boolean) => {
+    const { error } = await supabase.from("gatekeeper_tokens").update({ revoked: !revoked }).eq("id", id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("gatekeeper_tokens").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
+  const copyLink = (token: string) => {
+    const url = `${window.location.origin}/scan/${token}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Scan link copied");
+  };
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader><DialogTitle>Share scan-only access</DialogTitle></DialogHeader>
+      <p className="text-sm text-muted-foreground">
+        Send these links to gate staff. Anyone with the link can scan and check in attendees for <strong>this event only</strong> — no login required, no access to your account or other events.
+      </p>
+      <div className="flex items-end gap-2">
+        <div className="flex-1 space-y-1.5">
+          <Label className="text-sm">Label</Label>
+          <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Front door, Staff A…" />
+        </div>
+        <Button onClick={create}><Plus className="mr-2 h-4 w-4" />Create link</Button>
+      </div>
+      <div className="mt-2 max-h-64 space-y-2 overflow-auto">
+        {tokens.length === 0 && <p className="text-sm text-muted-foreground">No share links yet.</p>}
+        {tokens.map((t) => (
+          <div key={t.id} className="flex items-center gap-2 rounded-lg border border-border p-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{t.label}</p>
+              <p className="truncate font-mono text-xs text-muted-foreground">/scan/{t.token.slice(0, 12)}…</p>
+              {t.revoked && <p className="text-xs text-destructive">Revoked</p>}
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => copyLink(t.token)} title="Copy link"><Copy className="h-4 w-4" /></Button>
+            <Button size="sm" variant="ghost" onClick={() => revoke(t.id, t.revoked)}>{t.revoked ? "Enable" : "Revoke"}</Button>
+            <Button size="sm" variant="ghost" onClick={() => remove(t.id)}><Trash2 className="h-4 w-4" /></Button>
+          </div>
+        ))}
+      </div>
+    </DialogContent>
+  );
+}
