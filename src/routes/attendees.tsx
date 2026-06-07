@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/attendees")({
   head: () => ({ meta: [{ title: "Attendees — Peras" }] }),
@@ -18,11 +19,14 @@ type Row = {
   event_id: string;
   events: { name: string } | null;
 };
+type EventOpt = { id: string; name: string };
 
 function AttendeesPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
+  const [events, setEvents] = useState<EventOpt[]>([]);
+  const [eventFilter, setEventFilter] = useState<string>("all");
   const [q, setQ] = useState("");
 
   useEffect(() => {
@@ -37,13 +41,22 @@ function AttendeesPage() {
       .order("created_at", { ascending: false })
       .limit(500)
       .then(({ data }) => setRows((data as Row[]) ?? []));
+    supabase
+      .from("events")
+      .select("id,name")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setEvents((data as EventOpt[]) ?? []));
   }, [user]);
 
-  const filtered = rows.filter(
-    (r) =>
-      !q ||
-      r.name.toLowerCase().includes(q.toLowerCase()) ||
-      r.events?.name.toLowerCase().includes(q.toLowerCase()),
+  const filtered = useMemo(
+    () =>
+      rows.filter((r) => {
+        if (eventFilter !== "all" && r.event_id !== eventFilter) return false;
+        if (!q) return true;
+        const t = q.toLowerCase();
+        return r.name.toLowerCase().includes(t) || (r.events?.name ?? "").toLowerCase().includes(t);
+      }),
+    [rows, q, eventFilter],
   );
 
   if (!user) return null;
@@ -51,13 +64,27 @@ function AttendeesPage() {
   return (
     <AppLayout title="Attendees">
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="font-display text-3xl font-semibold tracking-tight">All attendees</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{rows.length} across all your events</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {filtered.length} of {rows.length} across {events.length} event{events.length === 1 ? "" : "s"}
+            </p>
           </div>
+        </div>
+
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <Select value={eventFilter} onValueChange={setEventFilter}>
+            <SelectTrigger className="w-[240px]"><SelectValue placeholder="All events" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All events</SelectItem>
+              {events.map((e) => (
+                <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
-            placeholder="Search…"
+            placeholder="Search by name or event…"
             className="max-w-xs"
             value={q}
             onChange={(e) => setQ(e.target.value)}
