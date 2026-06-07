@@ -51,7 +51,7 @@ function Index() {
               </div>
             </div>
             <div className="flex min-w-0 items-center justify-center overflow-hidden px-1 sm:px-0">
-              <div className="w-full max-w-[360px] origin-center rotate-2 transition-transform hover:rotate-0 max-[390px]:scale-[0.88] max-[340px]:scale-[0.78] sm:rotate-3">
+              <div className="w-full max-w-[360px] origin-center rotate-2 transition-transform hover:rotate-0 sm:rotate-3">
                 <EventPass
                   data={{
                     eventName: "Designers Meetup '26",

@@ -65,7 +65,7 @@ export function EventPass({ data, innerRef }: { data: PassData; innerRef?: React
   return (
     <div
       ref={innerRef}
-      className="relative w-[360px] overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] text-white shadow-2xl"
+      className="relative w-full max-w-[360px] overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a] text-white shadow-2xl"
       style={{ fontFamily: "Inter, system-ui, sans-serif" }}
     >
       {/* Banner */}
