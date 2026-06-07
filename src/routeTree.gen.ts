@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AttendeesRouteImport } from './routes/attendees'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ScanTokenRouteImport } from './routes/scan.$token'
 import { Route as PassPassCodeRouteImport } from './routes/pass.$passCode'
 import { Route as GatekeeperEventIdRouteImport } from './routes/gatekeeper.$eventId'
 import { Route as EventsNewRouteImport } from './routes/events.new'
@@ -43,6 +44,11 @@ const AttendeesRoute = AttendeesRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanTokenRoute = ScanTokenRouteImport.update({
+  id: '/scan/$token',
+  path: '/scan/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PassPassCodeRoute = PassPassCodeRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/events/new': typeof EventsNewRoute
   '/gatekeeper/$eventId': typeof GatekeeperEventIdRoute
   '/pass/$passCode': typeof PassPassCodeRoute
+  '/scan/$token': typeof ScanTokenRoute
   '/api/public/pass-image/$passCode': typeof ApiPublicPassImagePassCodeRoute
 }
 export interface FileRoutesByTo {
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/events/new': typeof EventsNewRoute
   '/gatekeeper/$eventId': typeof GatekeeperEventIdRoute
   '/pass/$passCode': typeof PassPassCodeRoute
+  '/scan/$token': typeof ScanTokenRoute
   '/api/public/pass-image/$passCode': typeof ApiPublicPassImagePassCodeRoute
 }
 export interface FileRoutesById {
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/events/new': typeof EventsNewRoute
   '/gatekeeper/$eventId': typeof GatekeeperEventIdRoute
   '/pass/$passCode': typeof PassPassCodeRoute
+  '/scan/$token': typeof ScanTokenRoute
   '/api/public/pass-image/$passCode': typeof ApiPublicPassImagePassCodeRoute
 }
 export interface FileRouteTypes {
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/events/new'
     | '/gatekeeper/$eventId'
     | '/pass/$passCode'
+    | '/scan/$token'
     | '/api/public/pass-image/$passCode'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/events/new'
     | '/gatekeeper/$eventId'
     | '/pass/$passCode'
+    | '/scan/$token'
     | '/api/public/pass-image/$passCode'
   id:
     | '__root__'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/events/new'
     | '/gatekeeper/$eventId'
     | '/pass/$passCode'
+    | '/scan/$token'
     | '/api/public/pass-image/$passCode'
   fileRoutesById: FileRoutesById
 }
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   EventsNewRoute: typeof EventsNewRoute
   GatekeeperEventIdRoute: typeof GatekeeperEventIdRoute
   PassPassCodeRoute: typeof PassPassCodeRoute
+  ScanTokenRoute: typeof ScanTokenRoute
   ApiPublicPassImagePassCodeRoute: typeof ApiPublicPassImagePassCodeRoute
 }
 
@@ -196,6 +209,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan/$token': {
+      id: '/scan/$token'
+      path: '/scan/$token'
+      fullPath: '/scan/$token'
+      preLoaderRoute: typeof ScanTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pass/$passCode': {
@@ -246,18 +266,9 @@ const rootRouteChildren: RootRouteChildren = {
   EventsNewRoute: EventsNewRoute,
   GatekeeperEventIdRoute: GatekeeperEventIdRoute,
   PassPassCodeRoute: PassPassCodeRoute,
+  ScanTokenRoute: ScanTokenRoute,
   ApiPublicPassImagePassCodeRoute: ApiPublicPassImagePassCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

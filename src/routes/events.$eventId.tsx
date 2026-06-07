@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import {
   Plus, Trash2, ArrowLeft, Upload, Check, X, Share2, FileText, ImageIcon, ScanLine,
-  LayoutGrid, List as ListIcon, Table as TableIcon, Search, Mail,
+  LayoutGrid, List as ListIcon, Table as TableIcon, Search, Mail, Copy, KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { toPng } from "html-to-image";
@@ -27,6 +27,7 @@ import { format } from "date-fns";
 import { useCurrentEvent } from "@/stores/use-current-event";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { createAttendeePass, createBulkAttendeePasses } from "@/lib/pass.functions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/events/$eventId")({
   head: () => ({ meta: [{ title: "Event — Peras" }] }),
@@ -65,18 +66,25 @@ function EventDetail() {
   const { eventId } = Route.useParams();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [event, setEvent] = useState<Event | null>(null);
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [previewing, setPreviewing] = useState<Attendee | null>(null);
-  const [view, setView] = useState<ViewMode>("table");
+  const [view, setView] = useState<ViewMode>("list");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "used" | "unused">("all");
   const [ticketFilter, setTicketFilter] = useState<string>("all");
   const setCurrent = useCurrentEvent((s) => s.setCurrent);
   const createOnePass = useServerFn(createAttendeePass);
   const createManyPasses = useServerFn(createBulkAttendeePasses);
+
+  // Force off table view on mobile
+  useEffect(() => {
+    if (isMobile && view === "table") setView("list");
+  }, [isMobile, view]);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -271,6 +279,12 @@ function EventDetail() {
             <Link to="/gatekeeper/$eventId" params={{ eventId: event.id }}>
               <Button variant="outline"><ScanLine className="mr-2 h-4 w-4" />Gatekeeper</Button>
             </Link>
+            <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline"><KeyRound className="mr-2 h-4 w-4" />Share scan access</Button>
+              </DialogTrigger>
+              <ShareGatekeeperDialog eventId={event.id} />
+            </Dialog>
             <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
               <DialogTrigger asChild><Button variant="outline"><Upload className="mr-2 h-4 w-4" />Bulk add</Button></DialogTrigger>
               <BulkDialog onSubmit={async (t, s) => { await bulkAdd(t, s); setBulkOpen(false); }} />
@@ -335,7 +349,7 @@ function EventDetail() {
                 </SelectContent>
               </Select>
               <div className="ml-auto inline-flex rounded-lg border border-border p-1">
-                {(["table", "list", "grid"] as ViewMode[]).map((v) => {
+                {((isMobile ? ["list", "grid"] : ["table", "list", "grid"]) as ViewMode[]).map((v) => {
                   const Icon = v === "table" ? TableIcon : v === "list" ? ListIcon : LayoutGrid;
                   return (
                     <button
@@ -357,7 +371,7 @@ function EventDetail() {
               Showing {filtered.length} of {totalCount}
             </p>
 
-            {view === "table" && (
+            {view === "table" && !isMobile && (
               <AttendeeTable
                 rows={filtered}
                 onView={setPreviewing}
@@ -638,6 +652,84 @@ function PassPreview({ event, attendee, onEmail }: { event: Event; attendee: Att
           )}
         </div>
         <WalletButtons />
+      </div>
+    </DialogContent>
+  );
+}
+type Token = { id: string; token: string; label: string; revoked: boolean; expires_at: string | null; created_at: string };
+
+function ShareGatekeeperDialog({ eventId }: { eventId: string }) {
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [label, setLabel] = useState("Front door");
+  const { user } = useAuth();
+
+  const load = async () => {
+    const { data } = await supabase
+      .from("gatekeeper_tokens")
+      .select("id,token,label,revoked,expires_at,created_at")
+      .eq("event_id", eventId)
+      .order("created_at", { ascending: false });
+    setTokens((data as Token[]) ?? []);
+  };
+
+  useEffect(() => { load(); }, [eventId]);
+
+  const create = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("gatekeeper_tokens")
+      .insert({ event_id: eventId, label: label || "Gatekeeper", created_by: user.id });
+    if (error) return toast.error(error.message);
+    toast.success("Share link created");
+    setLabel("Front door");
+    load();
+  };
+
+  const revoke = async (id: string, revoked: boolean) => {
+    const { error } = await supabase.from("gatekeeper_tokens").update({ revoked: !revoked }).eq("id", id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("gatekeeper_tokens").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
+  const copyLink = (token: string) => {
+    const url = `${window.location.origin}/scan/${token}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Scan link copied");
+  };
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader><DialogTitle>Share scan-only access</DialogTitle></DialogHeader>
+      <p className="text-sm text-muted-foreground">
+        Send these links to gate staff. Anyone with the link can scan and check in attendees for <strong>this event only</strong> — no login required, no access to your account or other events.
+      </p>
+      <div className="flex items-end gap-2">
+        <div className="flex-1 space-y-1.5">
+          <Label className="text-sm">Label</Label>
+          <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Front door, Staff A…" />
+        </div>
+        <Button onClick={create}><Plus className="mr-2 h-4 w-4" />Create link</Button>
+      </div>
+      <div className="mt-2 max-h-64 space-y-2 overflow-auto">
+        {tokens.length === 0 && <p className="text-sm text-muted-foreground">No share links yet.</p>}
+        {tokens.map((t) => (
+          <div key={t.id} className="flex items-center gap-2 rounded-lg border border-border p-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{t.label}</p>
+              <p className="truncate font-mono text-xs text-muted-foreground">/scan/{t.token.slice(0, 12)}…</p>
+              {t.revoked && <p className="text-xs text-destructive">Revoked</p>}
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => copyLink(t.token)} title="Copy link"><Copy className="h-4 w-4" /></Button>
+            <Button size="sm" variant="ghost" onClick={() => revoke(t.id, t.revoked)}>{t.revoked ? "Enable" : "Revoke"}</Button>
+            <Button size="sm" variant="ghost" onClick={() => remove(t.id)}><Trash2 className="h-4 w-4" /></Button>
+          </div>
+        ))}
       </div>
     </DialogContent>
   );
