@@ -112,6 +112,47 @@ export type Database = {
         }
         Relationships: []
       }
+      gatekeeper_tokens: {
+        Row: {
+          created_at: string
+          created_by: string
+          event_id: string
+          expires_at: string | null
+          id: string
+          label: string
+          revoked: boolean
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          event_id: string
+          expires_at?: string | null
+          id?: string
+          label?: string
+          revoked?: boolean
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          event_id?: string
+          expires_at?: string | null
+          id?: string
+          label?: string
+          revoked?: boolean
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gatekeeper_tokens_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
