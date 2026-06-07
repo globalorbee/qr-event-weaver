@@ -91,7 +91,35 @@ function AttendeesPage() {
           />
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-border">
+        {/* Mobile: list view */}
+        <div className="space-y-2 md:hidden">
+          {filtered.map((r) => (
+            <div key={r.id} className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{r.name}</p>
+                  <Link
+                    to="/events/$eventId"
+                    params={{ eventId: r.event_id }}
+                    className="mt-0.5 block truncate text-sm text-primary hover:underline"
+                  >
+                    {r.events?.name ?? "—"}
+                  </Link>
+                  <p className="mt-1 text-sm text-muted-foreground">{r.ticket_type}</p>
+                </div>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase ${r.status === "used" ? "bg-muted text-muted-foreground" : "bg-primary/15 text-primary"}`}>
+                  {r.status}
+                </span>
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <div className="rounded-xl border border-border p-10 text-center text-sm text-muted-foreground">No attendees</div>
+          )}
+        </div>
+
+        {/* Tablet/Desktop: table view */}
+        <div className="hidden overflow-hidden rounded-2xl border border-border md:block">
           <table className="w-full text-sm">
             <thead className="bg-muted text-xs uppercase text-muted-foreground">
               <tr>
