@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import {
   Plus, Trash2, ArrowLeft, Upload, Check, X, Share2, FileText, ImageIcon, ScanLine,
-  LayoutGrid, List as ListIcon, Table as TableIcon, Search, Mail,
+  LayoutGrid, List as ListIcon, Table as TableIcon, Search, Mail, Copy, KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { toPng } from "html-to-image";
@@ -27,6 +27,7 @@ import { format } from "date-fns";
 import { useCurrentEvent } from "@/stores/use-current-event";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { createAttendeePass, createBulkAttendeePasses } from "@/lib/pass.functions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/events/$eventId")({
   head: () => ({ meta: [{ title: "Event — Peras" }] }),
@@ -65,18 +66,25 @@ function EventDetail() {
   const { eventId } = Route.useParams();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [event, setEvent] = useState<Event | null>(null);
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [previewing, setPreviewing] = useState<Attendee | null>(null);
-  const [view, setView] = useState<ViewMode>("table");
+  const [view, setView] = useState<ViewMode>("list");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "used" | "unused">("all");
   const [ticketFilter, setTicketFilter] = useState<string>("all");
   const setCurrent = useCurrentEvent((s) => s.setCurrent);
   const createOnePass = useServerFn(createAttendeePass);
   const createManyPasses = useServerFn(createBulkAttendeePasses);
+
+  // Force off table view on mobile
+  useEffect(() => {
+    if (isMobile && view === "table") setView("list");
+  }, [isMobile, view]);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -271,6 +279,12 @@ function EventDetail() {
             <Link to="/gatekeeper/$eventId" params={{ eventId: event.id }}>
               <Button variant="outline"><ScanLine className="mr-2 h-4 w-4" />Gatekeeper</Button>
             </Link>
+            <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline"><KeyRound className="mr-2 h-4 w-4" />Share scan access</Button>
+              </DialogTrigger>
+              <ShareGatekeeperDialog eventId={event.id} />
+            </Dialog>
             <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
               <DialogTrigger asChild><Button variant="outline"><Upload className="mr-2 h-4 w-4" />Bulk add</Button></DialogTrigger>
               <BulkDialog onSubmit={async (t, s) => { await bulkAdd(t, s); setBulkOpen(false); }} />
@@ -335,7 +349,7 @@ function EventDetail() {
                 </SelectContent>
               </Select>
               <div className="ml-auto inline-flex rounded-lg border border-border p-1">
-                {(["table", "list", "grid"] as ViewMode[]).map((v) => {
+                {((isMobile ? ["list", "grid"] : ["table", "list", "grid"]) as ViewMode[]).map((v) => {
                   const Icon = v === "table" ? TableIcon : v === "list" ? ListIcon : LayoutGrid;
                   return (
                     <button
@@ -357,7 +371,7 @@ function EventDetail() {
               Showing {filtered.length} of {totalCount}
             </p>
 
-            {view === "table" && (
+            {view === "table" && !isMobile && (
               <AttendeeTable
                 rows={filtered}
                 onView={setPreviewing}
