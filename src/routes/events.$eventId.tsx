@@ -19,7 +19,15 @@ import {
 import {
   Plus, Trash2, ArrowLeft, Upload, Check, X, Share2, FileText, ImageIcon, ScanLine,
   LayoutGrid, List as ListIcon, Table as TableIcon, Search, Mail, Copy, KeyRound,
+  MoreVertical, Pencil,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
@@ -46,6 +54,7 @@ type Event = {
   banner_url: string | null;
   public_key?: string | null;
   private_key?: string | null;
+  ticket_types?: string[] | null;
 };
 type Attendee = {
   id: string;
@@ -77,6 +86,7 @@ function EventDetail() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "used" | "unused">("all");
   const [ticketFilter, setTicketFilter] = useState<string>("all");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const setCurrent = useCurrentEvent((s) => s.setCurrent);
   const createOnePass = useServerFn(createAttendeePass);
   const createManyPasses = useServerFn(createBulkAttendeePasses);
@@ -225,16 +235,25 @@ function EventDetail() {
   };
 
   const deleteEvent = async () => {
-    if (!confirm("Delete this event and all attendees?")) return;
     const { error } = await supabase.from("events").delete().eq("id", eventId);
     if (error) return toast.error(error.message);
+    toast.success("Event deleted");
     navigate({ to: "/dashboard" });
   };
 
-  const ticketTypes = useMemo(() => {
+  // Event-defined ticket types (fall back to those used by attendees)
+  const eventTicketTypes = useMemo(() => {
+    const fromEvent = (event?.ticket_types ?? []).filter(Boolean);
+    if (fromEvent.length) return fromEvent;
     const set = new Set(attendees.map((a) => a.ticket_type));
     return Array.from(set);
-  }, [attendees]);
+  }, [event, attendees]);
+  // Includes filter chips for ticket types present in current attendees
+  const ticketFilterOptions = useMemo(() => {
+    const set = new Set<string>(eventTicketTypes);
+    attendees.forEach((a) => set.add(a.ticket_type));
+    return Array.from(set);
+  }, [eventTicketTypes, attendees]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -287,13 +306,48 @@ function EventDetail() {
             </Dialog>
             <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
               <DialogTrigger asChild><Button variant="outline"><Upload className="mr-2 h-4 w-4" />Bulk add</Button></DialogTrigger>
-              <BulkDialog onSubmit={async (t, s) => { await bulkAdd(t, s); setBulkOpen(false); }} />
+              <BulkDialog
+                ticketTypes={eventTicketTypes}
+                onSubmit={async (text, s) => { await bulkAdd(text, s); setBulkOpen(false); }}
+              />
             </Dialog>
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" />Add attendee</Button></DialogTrigger>
-              <AddDialog onSubmit={async (n, t, e) => { await addAttendee(n, t, e); setAddOpen(false); }} />
+              <AddDialog
+                ticketTypes={eventTicketTypes}
+                onSubmit={async (n, t, e) => { await addAttendee(n, t, e); setAddOpen(false); }}
+              />
             </Dialog>
-            <Button variant="ghost" size="icon" onClick={deleteEvent}><Trash2 className="h-4 w-4" /></Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Event options"><MoreVertical className="h-4 w-4" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate({ to: "/events/new", search: { edit: event.id } })}>
+                  <Pencil className="mr-2 h-4 w-4" /> Edit event
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setConfirmDelete(true)} className="text-destructive focus:text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete event
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete <strong>{event.name}</strong> and all {totalCount} attendee pass{totalCount === 1 ? "" : "es"}. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={deleteEvent} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete event
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
@@ -343,7 +397,7 @@ function EventDetail() {
                 <SelectTrigger className="w-[170px]"><SelectValue placeholder="Ticket type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All ticket types</SelectItem>
-                  {ticketTypes.map((t) => (
+                  {ticketFilterOptions.map((t) => (
                     <SelectItem key={t} value={t}>{t}</SelectItem>
                   ))}
                 </SelectContent>
