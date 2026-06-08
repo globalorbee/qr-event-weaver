@@ -19,7 +19,15 @@ import {
 import {
   Plus, Trash2, ArrowLeft, Upload, Check, X, Share2, FileText, ImageIcon, ScanLine,
   LayoutGrid, List as ListIcon, Table as TableIcon, Search, Mail, Copy, KeyRound,
+  MoreVertical, Pencil,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
@@ -46,6 +54,7 @@ type Event = {
   banner_url: string | null;
   public_key?: string | null;
   private_key?: string | null;
+  ticket_types?: string[] | null;
 };
 type Attendee = {
   id: string;
@@ -77,6 +86,7 @@ function EventDetail() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "used" | "unused">("all");
   const [ticketFilter, setTicketFilter] = useState<string>("all");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const setCurrent = useCurrentEvent((s) => s.setCurrent);
   const createOnePass = useServerFn(createAttendeePass);
   const createManyPasses = useServerFn(createBulkAttendeePasses);
@@ -225,16 +235,25 @@ function EventDetail() {
   };
 
   const deleteEvent = async () => {
-    if (!confirm("Delete this event and all attendees?")) return;
     const { error } = await supabase.from("events").delete().eq("id", eventId);
     if (error) return toast.error(error.message);
+    toast.success("Event deleted");
     navigate({ to: "/dashboard" });
   };
 
-  const ticketTypes = useMemo(() => {
+  // Event-defined ticket types (fall back to those used by attendees)
+  const eventTicketTypes = useMemo(() => {
+    const fromEvent = (event?.ticket_types ?? []).filter(Boolean);
+    if (fromEvent.length) return fromEvent;
     const set = new Set(attendees.map((a) => a.ticket_type));
     return Array.from(set);
-  }, [attendees]);
+  }, [event, attendees]);
+  // Includes filter chips for ticket types present in current attendees
+  const ticketFilterOptions = useMemo(() => {
+    const set = new Set<string>(eventTicketTypes);
+    attendees.forEach((a) => set.add(a.ticket_type));
+    return Array.from(set);
+  }, [eventTicketTypes, attendees]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -287,13 +306,48 @@ function EventDetail() {
             </Dialog>
             <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
               <DialogTrigger asChild><Button variant="outline"><Upload className="mr-2 h-4 w-4" />Bulk add</Button></DialogTrigger>
-              <BulkDialog onSubmit={async (t, s) => { await bulkAdd(t, s); setBulkOpen(false); }} />
+              <BulkDialog
+                ticketTypes={eventTicketTypes}
+                onSubmit={async (text, s) => { await bulkAdd(text, s); setBulkOpen(false); }}
+              />
             </Dialog>
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" />Add attendee</Button></DialogTrigger>
-              <AddDialog onSubmit={async (n, t, e) => { await addAttendee(n, t, e); setAddOpen(false); }} />
+              <AddDialog
+                ticketTypes={eventTicketTypes}
+                onSubmit={async (n, t, e) => { await addAttendee(n, t, e); setAddOpen(false); }}
+              />
             </Dialog>
-            <Button variant="ghost" size="icon" onClick={deleteEvent}><Trash2 className="h-4 w-4" /></Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Event options"><MoreVertical className="h-4 w-4" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate({ to: "/events/new", search: { edit: event.id } })}>
+                  <Pencil className="mr-2 h-4 w-4" /> Edit event
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setConfirmDelete(true)} className="text-destructive focus:text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete event
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete <strong>{event.name}</strong> and all {totalCount} attendee pass{totalCount === 1 ? "" : "es"}. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={deleteEvent} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete event
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
@@ -343,7 +397,7 @@ function EventDetail() {
                 <SelectTrigger className="w-[170px]"><SelectValue placeholder="Ticket type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All ticket types</SelectItem>
-                  {ticketTypes.map((t) => (
+                  {ticketFilterOptions.map((t) => (
                     <SelectItem key={t} value={t}>{t}</SelectItem>
                   ))}
                 </SelectContent>
@@ -548,16 +602,31 @@ function AttendeeCard({
   );
 }
 
-function AddDialog({ onSubmit }: { onSubmit: (name: string, ticket: string, email: string) => void }) {
+function AddDialog({
+  ticketTypes,
+  onSubmit,
+}: {
+  ticketTypes: string[];
+  onSubmit: (name: string, ticket: string, email: string) => void;
+}) {
+  const safeTypes = ticketTypes.length ? ticketTypes : ["General"];
   const [name, setName] = useState("");
-  const [ticket, setTicket] = useState("General");
+  const [ticket, setTicket] = useState(safeTypes[0]);
   const [email, setEmail] = useState("");
   return (
     <DialogContent>
       <DialogHeader><DialogTitle>Add attendee</DialogTitle></DialogHeader>
       <div className="grid gap-3">
         <div className="space-y-1.5"><Label className="text-sm">Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-        <div className="space-y-1.5"><Label className="text-sm">Ticket type</Label><Input value={ticket} onChange={(e) => setTicket(e.target.value)} /></div>
+        <div className="space-y-1.5">
+          <Label className="text-sm">Ticket type</Label>
+          <Select value={ticket} onValueChange={setTicket}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {safeTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="space-y-1.5">
           <Label className="text-sm">Email (optional — pass is emailed)</Label>
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
@@ -568,26 +637,91 @@ function AddDialog({ onSubmit }: { onSubmit: (name: string, ticket: string, emai
   );
 }
 
-function BulkDialog({ onSubmit }: { onSubmit: (text: string, sharedTicket: string) => void }) {
-  const [text, setText] = useState("");
-  const [sharedTicket, setSharedTicket] = useState("General");
+function BulkDialog({
+  ticketTypes,
+  onSubmit,
+}: {
+  ticketTypes: string[];
+  onSubmit: (text: string, sharedTicket: string) => void;
+}) {
+  const MAX = 10;
+  const safeTypes = ticketTypes.length ? ticketTypes : ["General"];
+  const [sharedTicket, setSharedTicket] = useState(safeTypes[0]);
+  const [rows, setRows] = useState<Array<{ name: string; email: string }>>([{ name: "", email: "" }]);
+
+  const updateRow = (i: number, key: "name" | "email", val: string) => {
+    setRows((p) => p.map((r, idx) => (idx === i ? { ...r, [key]: val } : r)));
+  };
+  const addRow = () => {
+    if (rows.length >= MAX) return;
+    setRows((p) => [...p, { name: "", email: "" }]);
+  };
+  const removeRow = (i: number) => {
+    setRows((p) => (p.length <= 1 ? p : p.filter((_, idx) => idx !== i)));
+  };
+
+  const submit = () => {
+    const text = rows
+      .map((r) => r.name.trim() + (r.email.trim() ? `, ${r.email.trim()}` : ""))
+      .filter((line) => line.length > 0)
+      .join("\n");
+    if (!text) return toast.error("Add at least one attendee");
+    onSubmit(text, sharedTicket);
+  };
+
   return (
-    <DialogContent>
+    <DialogContent className="max-w-lg">
       <DialogHeader><DialogTitle>Bulk add attendees</DialogTitle></DialogHeader>
       <p className="text-sm text-muted-foreground">
-        One per line: <code className="rounded bg-muted px-1">Name, email@example.com</code> (email optional). All attendees share the same ticket type below — every attendee gets a unique signed pass using your event brand color.
+        Add up to {MAX} attendees at once. All share the selected ticket type — every attendee gets a unique signed pass.
       </p>
       <div className="space-y-1.5">
-        <Label className="text-sm">Shared ticket type</Label>
-        <Input value={sharedTicket} onChange={(e) => setSharedTicket(e.target.value)} placeholder="General" />
+        <Label className="text-sm">Ticket type for this batch</Label>
+        <Select value={sharedTicket} onValueChange={setSharedTicket}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {safeTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
-      <Textarea
-        rows={10}
-        placeholder={"Jane Doe, jane@example.com\nJohn Smith, john@example.com\nAlex Rivera"}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
-      <DialogFooter><Button onClick={() => onSubmit(text, sharedTicket)}>Create passes</Button></DialogFooter>
+
+      <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
+        {rows.map((r, i) => (
+          <div key={i} className="rounded-lg border border-border bg-secondary/40 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Attendee {i + 1}</span>
+              {rows.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeRow(i)}
+                  className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label={`Remove attendee ${i + 1}`}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Input placeholder="Name" value={r.name} onChange={(e) => updateRow(i, "name", e.target.value)} />
+              <Input type="email" placeholder="Email (optional)" value={r.email} onChange={(e) => updateRow(i, "email", e.target.value)} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {rows.length < MAX ? (
+        <button
+          type="button"
+          onClick={addRow}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-2 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+        >
+          <Plus className="h-4 w-4" /> Add another ({rows.length}/{MAX})
+        </button>
+      ) : (
+        <p className="text-center text-xs text-muted-foreground">Maximum {MAX} per batch</p>
+      )}
+
+      <DialogFooter><Button onClick={submit}>Create {rows.filter((r) => r.name.trim()).length || ""} pass{rows.filter((r) => r.name.trim()).length === 1 ? "" : "es"}</Button></DialogFooter>
     </DialogContent>
   );
 }
