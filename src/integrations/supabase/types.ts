@@ -74,6 +74,7 @@ export type Database = {
           organizer_name: string
           private_key: string | null
           public_key: string | null
+          ticket_types: string[]
           updated_at: string
           user_id: string
           venue: string
@@ -90,6 +91,7 @@ export type Database = {
           organizer_name: string
           private_key?: string | null
           public_key?: string | null
+          ticket_types?: string[]
           updated_at?: string
           user_id: string
           venue: string
@@ -106,6 +108,7 @@ export type Database = {
           organizer_name?: string
           private_key?: string | null
           public_key?: string | null
+          ticket_types?: string[]
           updated_at?: string
           user_id?: string
           venue?: string
