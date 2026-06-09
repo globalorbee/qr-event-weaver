@@ -1,9 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Plus, Calendar, MapPin, Users, ArrowRight, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -37,6 +41,8 @@ function Dashboard() {
   const [events, setEvents] = useState<Event[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [pendingDelete, setPendingDelete] = useState<Event | null>(null);
+  const [q, setQ] = useState("");
+  const [sort, setSort] = useState<"newest" | "oldest" | "az" | "za">("newest");
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -61,6 +67,20 @@ function Dashboard() {
   }, [user]);
 
   if (!user) return null;
+
+  const visible = useMemo(() => {
+    const list = events.filter((e) =>
+      !q ? true : e.name.toLowerCase().includes(q.toLowerCase()) || e.venue.toLowerCase().includes(q.toLowerCase()),
+    );
+    const sorted = [...list].sort((a, b) => {
+      if (sort === "az") return a.name.localeCompare(b.name);
+      if (sort === "za") return b.name.localeCompare(a.name);
+      const da = new Date(a.event_date).getTime();
+      const db = new Date(b.event_date).getTime();
+      return sort === "newest" ? db - da : da - db;
+    });
+    return sorted;
+  }, [events, q, sort]);
 
   const confirmDelete = async () => {
     if (!pendingDelete) return;
@@ -96,8 +116,26 @@ function Dashboard() {
             </Link>
           </div>
         ) : (
+          <>
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <Input
+              placeholder="Search events…"
+              className="w-full max-w-xs"
+              value={q}
+              onChange={(ev) => setQ(ev.target.value)}
+            />
+            <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+                <SelectItem value="az">Name A–Z</SelectItem>
+                <SelectItem value="za">Name Z–A</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {events.map((e) => (
+            {visible.map((e) => (
               <div key={e.id} className="group relative overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-primary/50">
                 <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: e.brand_color }} />
                 <div className="absolute right-2 top-3 z-10">
@@ -136,6 +174,12 @@ function Dashboard() {
               </div>
             ))}
           </div>
+          {visible.length === 0 && (
+            <div className="mt-6 rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+              No events match your search.
+            </div>
+          )}
+          </>
         )}
 
         <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
