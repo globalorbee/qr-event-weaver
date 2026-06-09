@@ -74,6 +74,12 @@ function AttendeesPage() {
         </div>
 
         <div className="mb-6 flex flex-wrap items-center gap-3">
+          <Input
+            placeholder="Search by name or event…"
+            className="w-full max-w-xs"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
           <Select value={eventFilter} onValueChange={setEventFilter}>
             <SelectTrigger className="w-[240px]"><SelectValue placeholder="All events" /></SelectTrigger>
             <SelectContent>
@@ -83,12 +89,6 @@ function AttendeesPage() {
               ))}
             </SelectContent>
           </Select>
-          <Input
-            placeholder="Search by name or event…"
-            className="max-w-xs"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
         </div>
 
         {/* Mobile: list view */}

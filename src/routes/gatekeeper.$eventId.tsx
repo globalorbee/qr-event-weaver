@@ -6,9 +6,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { syncScans } from "@/lib/scan.functions";
 import { decodeSignedPass, verifySignedPass } from "@/lib/qr-crypto";
 import { recordScan, getScan, getUnsynced, markSynced } from "@/lib/offline-cache";
-import { Button } from "@/components/ui/button";
-import { Check, X, AlertTriangle, WifiOff, Wifi, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { ScannerShell } from "@/components/ScannerShell";
 
 export const Route = createFileRoute("/gatekeeper/$eventId")({
   head: () => ({ meta: [{ title: "Gatekeeper — Peras" }] }),
@@ -158,81 +158,24 @@ function Gatekeeper() {
 
   if (!user) return null;
 
-  const accent =
-    state.kind === "valid" ? "#4F39F6"
-    : state.kind === "invalid" ? "#ef4444"
-    : state.kind === "used" ? "#a3a3a3"
-    : "transparent";
-
-  const title =
-    state.kind === "valid" ? "Pass verified"
-    : state.kind === "invalid" ? "Pass rejected"
-    : state.kind === "used" ? "Already checked in"
-    : "";
-
-  const subtitle =
-    state.kind === "valid" ? "Welcome them in."
-    : state.kind === "invalid" ? "This pass couldn't be verified."
-    : state.kind === "used" ? "This pass was scanned earlier."
-    : "";
-
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-md px-5 py-5">
-        <div className="flex items-center justify-between gap-2">
-          <Link to="/events/$eventId" params={{ eventId }} className="inline-flex items-center gap-1 text-sm text-white/70 hover:text-white">
-            <ArrowLeft className="h-4 w-4" /> Back
-          </Link>
-          <div className="flex items-center gap-3 text-xs text-white/70">
-            <span className="inline-flex items-center gap-1">
-              {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-              {online ? "Online" : "Offline"}
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">{pendingCount} pending</span>
-          </div>
-        </div>
-
-        {state.kind === "idle" ? (
-          <>
-            <h1 className="mb-1 mt-6 text-center font-display text-2xl font-semibold">Scan a pass</h1>
-            <p className="mb-5 text-center text-sm text-white/50">
-              Point the camera at the attendee's QR code
-            </p>
-            {!publicKey && <p className="mb-4 text-center text-sm text-white/40">Loading event key…</p>}
-            <div id="qr-reader" className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]" />
-          </>
-        ) : (
-          <div className="mt-10">
-            <div
-              className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-8"
-              style={{ boxShadow: `0 0 0 1px ${accent}33, 0 20px 60px -20px ${accent}55` }}
-            >
-              <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: accent }} />
-              <div
-                className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full"
-                style={{ backgroundColor: `${accent}1A`, border: `1px solid ${accent}55` }}
-              >
-                {state.kind === "valid" && <Check className="h-10 w-10" strokeWidth={2.5} style={{ color: accent }} />}
-                {state.kind === "invalid" && <X className="h-10 w-10" strokeWidth={2.5} style={{ color: accent }} />}
-                {state.kind === "used" && <AlertTriangle className="h-10 w-10" strokeWidth={2.5} style={{ color: accent }} />}
-              </div>
-              <p className="text-center text-xs uppercase tracking-[0.25em] text-white/40">Scan result</p>
-              <h2 className="mt-2 text-center font-display text-3xl font-semibold tracking-tight">{title}</h2>
-              <p className="mt-2 text-center text-sm text-white/60">{subtitle}</p>
-              {"reason" in state && state.reason && (
-                <p className="mt-3 text-center text-sm text-white/50">{state.reason}</p>
-              )}
-            </div>
-            <Button
-              className="mt-6 w-full"
-              style={{ backgroundColor: "#4F39F6", color: "#fff" }}
-              onClick={() => setState({ kind: "idle" })}
-            >
-              Scan next
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
+    <ScannerShell
+      online={online}
+      pendingCount={pendingCount}
+      state={state}
+      onReset={() => setState({ kind: "idle" })}
+      back={
+        <Link
+          to="/events/$eventId"
+          params={{ eventId }}
+          className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </Link>
+      }
+      readerId="qr-reader"
+      ready={!!publicKey}
+    />
   );
 }
+
