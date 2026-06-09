@@ -190,3 +190,70 @@
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
 }
+
+/* ------------------------------------------------------------------
+ * html5-qrcode scanner overrides — strip the library's default chrome
+ * (phone icon, info text, raw buttons) and match the Peras dark theme.
+ * ------------------------------------------------------------------ */
+#qr-reader,
+#qr-reader-public {
+  border: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  width: 100% !important;
+}
+#qr-reader *,
+#qr-reader-public * {
+  font-family: var(--font-sans) !important;
+}
+#qr-reader img,
+#qr-reader-public img {
+  display: none !important;
+}
+#qr-reader__dashboard_section_csr,
+#qr-reader-public__dashboard_section_csr {
+  padding: 16px !important;
+  text-align: center !important;
+}
+#qr-reader__dashboard_section_swaplink,
+#qr-reader-public__dashboard_section_swaplink {
+  color: #ffffff !important;
+  text-decoration: none !important;
+  font-size: 13px !important;
+  opacity: 0.7;
+}
+#qr-reader__status_span,
+#qr-reader-public__status_span,
+#qr-reader__header_message,
+#qr-reader-public__header_message {
+  display: none !important;
+}
+#qr-reader select,
+#qr-reader-public select,
+#qr-reader input[type="file"],
+#qr-reader-public input[type="file"] {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  margin: 4px 0 !important;
+}
+#qr-reader button,
+#qr-reader-public button {
+  background: #4F39F6 !important;
+  color: #fff !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  padding: 10px 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  margin: 6px 4px !important;
+  cursor: pointer !important;
+  box-shadow: 0 6px 20px -10px #4F39F6 !important;
+}
+#qr-reader video,
+#qr-reader-public video {
+  border-radius: 18px !important;
+}
