@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getGatekeeperContext, syncScansByToken } from "@/lib/gatekeeper-token.functions";
 import { decodeSignedPass, verifySignedPass } from "@/lib/qr-crypto";
 import { recordScan, getScan, getUnsynced, markSynced } from "@/lib/offline-cache";
-import { ScannerShell } from "@/routes/gatekeeper.$eventId";
+import { ScannerShell } from "@/components/ScannerShell";
 
 export const Route = createFileRoute("/scan/$token")({
   head: () => ({ meta: [{ title: "Scan — Peras" }] }),
