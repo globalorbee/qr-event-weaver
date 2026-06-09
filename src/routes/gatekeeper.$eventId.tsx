@@ -7,7 +7,7 @@ import { syncScans } from "@/lib/scan.functions";
 import { decodeSignedPass, verifySignedPass } from "@/lib/qr-crypto";
 import { recordScan, getScan, getUnsynced, markSynced } from "@/lib/offline-cache";
 import { Button } from "@/components/ui/button";
-import { Check, X, AlertTriangle, WifiOff, Wifi, ArrowLeft } from "lucide-react";
+import { Check, X, AlertTriangle, WifiOff, Wifi, ArrowLeft, ScanLine } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/gatekeeper/$eventId")({
@@ -158,11 +158,51 @@ function Gatekeeper() {
 
   if (!user) return null;
 
+  return (
+    <ScannerShell
+      online={online}
+      pendingCount={pendingCount}
+      state={state}
+      onReset={() => setState({ kind: "idle" })}
+      back={
+        <Link
+          to="/events/$eventId"
+          params={{ eventId }}
+          className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </Link>
+      }
+      readerId="qr-reader"
+      ready={!!publicKey}
+    />
+  );
+}
+
+export function ScannerShell({
+  online,
+  pendingCount,
+  state,
+  onReset,
+  back,
+  readerId,
+  ready,
+  header,
+}: {
+  online: boolean;
+  pendingCount: number;
+  state: State;
+  onReset: () => void;
+  back?: React.ReactNode;
+  readerId: string;
+  ready: boolean;
+  header?: React.ReactNode;
+}) {
   const accent =
     state.kind === "valid" ? "#4F39F6"
     : state.kind === "invalid" ? "#ef4444"
-    : state.kind === "used" ? "#a3a3a3"
-    : "transparent";
+    : state.kind === "used" ? "#f59e0b"
+    : "#4F39F6";
 
   const title =
     state.kind === "valid" ? "Pass verified"
@@ -177,35 +217,54 @@ function Gatekeeper() {
     : "";
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-md px-5 py-5">
+    <div className="min-h-[100dvh] bg-black text-white">
+      <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-6 pt-4 sm:px-6">
         <div className="flex items-center justify-between gap-2">
-          <Link to="/events/$eventId" params={{ eventId }} className="inline-flex items-center gap-1 text-sm text-white/70 hover:text-white">
-            <ArrowLeft className="h-4 w-4" /> Back
-          </Link>
-          <div className="flex items-center gap-3 text-xs text-white/70">
-            <span className="inline-flex items-center gap-1">
-              {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+          <div className="min-w-0">{back ?? header}</div>
+          <div className="flex shrink-0 items-center gap-2 text-[11px] text-white/60">
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1">
+              {online ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
               {online ? "Online" : "Offline"}
             </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5">{pendingCount} pending</span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">
+              {pendingCount} pending
+            </span>
           </div>
         </div>
 
         {state.kind === "idle" ? (
-          <>
-            <h1 className="mb-1 mt-6 text-center font-display text-2xl font-semibold">Scan a pass</h1>
-            <p className="mb-5 text-center text-sm text-white/50">
-              Point the camera at the attendee's QR code
+          <div className="mt-6 flex flex-1 flex-col">
+            <div className="mb-4 text-center">
+              <div className="mx-auto mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 ring-1 ring-primary/30">
+                <ScanLine className="h-5 w-5 text-primary" />
+              </div>
+              <h1 className="font-display text-2xl font-semibold">Scan a pass</h1>
+              <p className="mt-1 text-sm text-white/50">
+                Point the camera at the attendee's QR code
+              </p>
+            </div>
+            {!ready && (
+              <p className="mb-3 text-center text-sm text-white/40">Loading…</p>
+            )}
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-2">
+              <div id={readerId} />
+              {/* corner brackets overlay */}
+              <div className="pointer-events-none absolute inset-3 rounded-2xl">
+                <span className="absolute left-0 top-0 h-6 w-6 rounded-tl-xl border-l-2 border-t-2 border-primary" />
+                <span className="absolute right-0 top-0 h-6 w-6 rounded-tr-xl border-r-2 border-t-2 border-primary" />
+                <span className="absolute bottom-0 left-0 h-6 w-6 rounded-bl-xl border-b-2 border-l-2 border-primary" />
+                <span className="absolute bottom-0 right-0 h-6 w-6 rounded-br-xl border-b-2 border-r-2 border-primary" />
+              </div>
+            </div>
+            <p className="mt-4 text-center text-xs text-white/35">
+              Hold steady — passes verify automatically
             </p>
-            {!publicKey && <p className="mb-4 text-center text-sm text-white/40">Loading event key…</p>}
-            <div id="qr-reader" className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]" />
-          </>
+          </div>
         ) : (
-          <div className="mt-10">
+          <div className="mt-10 flex flex-1 flex-col">
             <div
               className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-8"
-              style={{ boxShadow: `0 0 0 1px ${accent}33, 0 20px 60px -20px ${accent}55` }}
+              style={{ boxShadow: `0 0 0 1px ${accent}33, 0 20px 60px -20px ${accent}66` }}
             >
               <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: accent }} />
               <div
@@ -226,7 +285,7 @@ function Gatekeeper() {
             <Button
               className="mt-6 w-full"
               style={{ backgroundColor: "#4F39F6", color: "#fff" }}
-              onClick={() => setState({ kind: "idle" })}
+              onClick={onReset}
             >
               Scan next
             </Button>
