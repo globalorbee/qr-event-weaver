@@ -66,8 +66,6 @@ function Dashboard() {
     if (user) load();
   }, [user]);
 
-  if (!user) return null;
-
   const visible = useMemo(() => {
     const list = events.filter((e) =>
       !q ? true : e.name.toLowerCase().includes(q.toLowerCase()) || e.venue.toLowerCase().includes(q.toLowerCase()),
@@ -81,6 +79,8 @@ function Dashboard() {
     });
     return sorted;
   }, [events, q, sort]);
+
+  if (!user) return null;
 
   const confirmDelete = async () => {
     if (!pendingDelete) return;
