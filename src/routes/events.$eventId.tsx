@@ -795,6 +795,7 @@ function PassPreview({ event, attendee, onEmail }: { event: Event; attendee: Att
 
   const downloadPng = async () => {
     if (!ref.current) return;
+    const { toPng } = await import("html-to-image");
     const dataUrl = await toPng(ref.current, { pixelRatio: 3, cacheBust: true });
     const link = document.createElement("a");
     link.download = `pass-${attendee.name.replace(/\s+/g, "-")}.png`;
@@ -804,6 +805,10 @@ function PassPreview({ event, attendee, onEmail }: { event: Event; attendee: Att
 
   const downloadPdf = async () => {
     if (!ref.current) return;
+    const [{ toPng }, { default: jsPDF }] = await Promise.all([
+      import("html-to-image"),
+      import("jspdf"),
+    ]);
     const dataUrl = await toPng(ref.current, { pixelRatio: 3, cacheBust: true });
     const pdf = new jsPDF({ unit: "pt", format: [360, 600] });
     pdf.addImage(dataUrl, "PNG", 0, 0, 360, 600);
