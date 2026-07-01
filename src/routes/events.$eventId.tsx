@@ -822,7 +822,7 @@ function PassPreview({ event, attendee, onEmail }: { event: Event; attendee: Att
   };
 
   return (
-    <DialogContent className="max-w-md">
+    <DialogContent className="w-[92vw] max-w-md max-h-[90dvh] overflow-y-auto">
       <DialogHeader><DialogTitle>Pass preview</DialogTitle></DialogHeader>
       <div className="flex justify-center py-4">
         <EventPass data={data} innerRef={ref} />
