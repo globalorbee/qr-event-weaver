@@ -227,7 +227,7 @@
 /* file-scan region: thinner border + 8px gap between file button and drop text */
 #qr-reader__dashboard_section_fsr,
 #qr-reader-public__dashboard_section_fsr {
-  border-width: 2px !important;
+  border-width: 1px !important;
   border-style: dashed !important;
   border-color: rgba(255,255,255,0.16) !important;
   border-radius: 14px !important;
@@ -275,4 +275,18 @@
 #qr-reader video,
 #qr-reader-public video {
   border-radius: 18px !important;
+}
+
+/* ------------------------------------------------------------------
+ * Mobile modal sizing — cap at 358px with 16px margins, rounded 16px.
+ * Uses !important to override consumer max-w-* utilities.
+ * ------------------------------------------------------------------ */
+@media (max-width: 639px) {
+  .peras-dialog {
+    max-width: 358px !important;
+    width: calc(100vw - 32px) !important;
+    border-radius: 16px !important;
+    padding: 20px !important;
+    gap: 12px !important;
+  }
 }
