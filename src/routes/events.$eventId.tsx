@@ -29,8 +29,6 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { toPng } from "html-to-image";
-import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { useCurrentEvent } from "@/stores/use-current-event";
 import { sendTransactionalEmail } from "@/lib/email/send";
@@ -79,7 +77,6 @@ function EventDetail() {
   const [event, setEvent] = useState<Event | null>(null);
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [addOpen, setAddOpen] = useState(false);
-  const [bulkOpen, setBulkOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [previewing, setPreviewing] = useState<Attendee | null>(null);
   const [view, setView] = useState<ViewMode>("list");
@@ -304,18 +301,12 @@ function EventDetail() {
               </DialogTrigger>
               <ShareGatekeeperDialog eventId={event.id} />
             </Dialog>
-            <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
-              <DialogTrigger asChild><Button variant="outline"><Upload className="mr-2 h-4 w-4" />Bulk add</Button></DialogTrigger>
-              <BulkDialog
-                ticketTypes={eventTicketTypes}
-                onSubmit={async (text, s) => { await bulkAdd(text, s); setBulkOpen(false); }}
-              />
-            </Dialog>
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" />Add attendee</Button></DialogTrigger>
-              <AddDialog
+              <AddAttendeeFlow
                 ticketTypes={eventTicketTypes}
-                onSubmit={async (n, t, e) => { await addAttendee(n, t, e); setAddOpen(false); }}
+                onSingle={async (n, t, e) => { await addAttendee(n, t, e); setAddOpen(false); }}
+                onBulk={async (text, s) => { await bulkAdd(text, s); setAddOpen(false); }}
               />
             </Dialog>
             <DropdownMenu>
