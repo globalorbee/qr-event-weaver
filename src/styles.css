@@ -221,6 +221,25 @@
   text-decoration: none !important;
   font-size: 13px !important;
   opacity: 0.7;
+  display: inline-block !important;
+  margin-top: 16px !important;
+}
+/* file-scan region: thinner border + 8px gap between file button and drop text */
+#qr-reader__dashboard_section_fsr,
+#qr-reader-public__dashboard_section_fsr {
+  border-width: 2px !important;
+  border-style: dashed !important;
+  border-color: rgba(255,255,255,0.16) !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+}
+#qr-reader__dashboard_section_fsr > div,
+#qr-reader-public__dashboard_section_fsr > div {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 #qr-reader__status_span,
 #qr-reader-public__status_span,

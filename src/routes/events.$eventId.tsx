@@ -29,8 +29,6 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { toPng } from "html-to-image";
-import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { useCurrentEvent } from "@/stores/use-current-event";
 import { sendTransactionalEmail } from "@/lib/email/send";
@@ -79,7 +77,6 @@ function EventDetail() {
   const [event, setEvent] = useState<Event | null>(null);
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [addOpen, setAddOpen] = useState(false);
-  const [bulkOpen, setBulkOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [previewing, setPreviewing] = useState<Attendee | null>(null);
   const [view, setView] = useState<ViewMode>("list");
@@ -304,18 +301,12 @@ function EventDetail() {
               </DialogTrigger>
               <ShareGatekeeperDialog eventId={event.id} />
             </Dialog>
-            <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
-              <DialogTrigger asChild><Button variant="outline"><Upload className="mr-2 h-4 w-4" />Bulk add</Button></DialogTrigger>
-              <BulkDialog
-                ticketTypes={eventTicketTypes}
-                onSubmit={async (text, s) => { await bulkAdd(text, s); setBulkOpen(false); }}
-              />
-            </Dialog>
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" />Add attendee</Button></DialogTrigger>
-              <AddDialog
+              <AddAttendeeFlow
                 ticketTypes={eventTicketTypes}
-                onSubmit={async (n, t, e) => { await addAttendee(n, t, e); setAddOpen(false); }}
+                onSingle={async (n, t, e) => { await addAttendee(n, t, e); setAddOpen(false); }}
+                onBulk={async (text, s) => { await bulkAdd(text, s); setAddOpen(false); }}
               />
             </Dialog>
             <DropdownMenu>
@@ -602,12 +593,62 @@ function AttendeeCard({
   );
 }
 
+function AddAttendeeFlow({
+  ticketTypes,
+  onSingle,
+  onBulk,
+}: {
+  ticketTypes: string[];
+  onSingle: (name: string, ticket: string, email: string) => void;
+  onBulk: (text: string, sharedTicket: string) => void;
+}) {
+  const [mode, setMode] = useState<"choose" | "single" | "bulk">("choose");
+  if (mode === "choose") {
+    return (
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Add attendee</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">How would you like to add attendees?</p>
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setMode("single")}
+            className="group rounded-xl border border-border bg-card p-5 text-left transition-colors hover:border-primary/50"
+          >
+            <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Plus className="h-4 w-4" />
+            </div>
+            <p className="font-medium">Single attendee</p>
+            <p className="mt-1 text-sm text-muted-foreground">Add one person with name, ticket type, and email.</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("bulk")}
+            className="group rounded-xl border border-border bg-card p-5 text-left transition-colors hover:border-primary/50"
+          >
+            <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Upload className="h-4 w-4" />
+            </div>
+            <p className="font-medium">Bulk add</p>
+            <p className="mt-1 text-sm text-muted-foreground">Add up to 10 attendees sharing a ticket type.</p>
+          </button>
+        </div>
+      </DialogContent>
+    );
+  }
+  if (mode === "single") {
+    return <AddDialog ticketTypes={ticketTypes} onBack={() => setMode("choose")} onSubmit={onSingle} />;
+  }
+  return <BulkDialog ticketTypes={ticketTypes} onBack={() => setMode("choose")} onSubmit={onBulk} />;
+}
+
 function AddDialog({
   ticketTypes,
   onSubmit,
+  onBack,
 }: {
   ticketTypes: string[];
   onSubmit: (name: string, ticket: string, email: string) => void;
+  onBack?: () => void;
 }) {
   const safeTypes = ticketTypes.length ? ticketTypes : ["General"];
   const [name, setName] = useState("");
@@ -617,8 +658,8 @@ function AddDialog({
     <DialogContent>
       <DialogHeader><DialogTitle>Add attendee</DialogTitle></DialogHeader>
       <div className="grid gap-3">
-        <div className="space-y-1.5"><Label className="text-sm">Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-        <div className="space-y-1.5">
+        <div className="space-y-2"><Label className="text-sm">Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div className="space-y-2">
           <Label className="text-sm">Ticket type</Label>
           <Select value={ticket} onValueChange={setTicket}>
             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -627,12 +668,15 @@ function AddDialog({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label className="text-sm">Email (optional — pass is emailed)</Label>
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
         </div>
       </div>
-      <DialogFooter><Button onClick={() => name && onSubmit(name, ticket, email)}>Add</Button></DialogFooter>
+      <DialogFooter>
+        {onBack && <Button variant="ghost" onClick={onBack}>Back</Button>}
+        <Button onClick={() => name && onSubmit(name, ticket, email)}>Add</Button>
+      </DialogFooter>
     </DialogContent>
   );
 }
@@ -640,9 +684,11 @@ function AddDialog({
 function BulkDialog({
   ticketTypes,
   onSubmit,
+  onBack,
 }: {
   ticketTypes: string[];
   onSubmit: (text: string, sharedTicket: string) => void;
+  onBack?: () => void;
 }) {
   const MAX = 10;
   const safeTypes = ticketTypes.length ? ticketTypes : ["General"];
@@ -675,7 +721,7 @@ function BulkDialog({
       <p className="text-sm text-muted-foreground">
         Add up to {MAX} attendees at once. All share the selected ticket type — every attendee gets a unique signed pass.
       </p>
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <Label className="text-sm">Ticket type for this batch</Label>
         <Select value={sharedTicket} onValueChange={setSharedTicket}>
           <SelectTrigger><SelectValue /></SelectTrigger>
@@ -749,6 +795,7 @@ function PassPreview({ event, attendee, onEmail }: { event: Event; attendee: Att
 
   const downloadPng = async () => {
     if (!ref.current) return;
+    const { toPng } = await import("html-to-image");
     const dataUrl = await toPng(ref.current, { pixelRatio: 3, cacheBust: true });
     const link = document.createElement("a");
     link.download = `pass-${attendee.name.replace(/\s+/g, "-")}.png`;
@@ -758,6 +805,10 @@ function PassPreview({ event, attendee, onEmail }: { event: Event; attendee: Att
 
   const downloadPdf = async () => {
     if (!ref.current) return;
+    const [{ toPng }, { default: jsPDF }] = await Promise.all([
+      import("html-to-image"),
+      import("jspdf"),
+    ]);
     const dataUrl = await toPng(ref.current, { pixelRatio: 3, cacheBust: true });
     const pdf = new jsPDF({ unit: "pt", format: [360, 600] });
     pdf.addImage(dataUrl, "PNG", 0, 0, 360, 600);
@@ -771,7 +822,7 @@ function PassPreview({ event, attendee, onEmail }: { event: Event; attendee: Att
   };
 
   return (
-    <DialogContent className="max-w-md">
+    <DialogContent className="w-[92vw] max-w-md max-h-[90dvh] overflow-y-auto">
       <DialogHeader><DialogTitle>Pass preview</DialogTitle></DialogHeader>
       <div className="flex justify-center py-4">
         <EventPass data={data} innerRef={ref} />
@@ -844,7 +895,7 @@ function ShareGatekeeperDialog({ eventId }: { eventId: string }) {
         Send these links to gate staff. Anyone with the link can scan and check in attendees for <strong>this event only</strong> — no login required, no access to your account or other events.
       </p>
       <div className="flex items-end gap-2">
-        <div className="flex-1 space-y-1.5">
+        <div className="flex-1 space-y-2">
           <Label className="text-sm">Label</Label>
           <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Front door, Staff A…" />
         </div>
