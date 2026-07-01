@@ -608,7 +608,7 @@ function AddAttendeeFlow({
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>Add attendee</DialogTitle></DialogHeader>
         <p className="text-sm text-muted-foreground">How would you like to add attendees?</p>
-        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+        <div className="mt-2 flex flex-col gap-3">
           <button
             type="button"
             onClick={() => setMode("single")}
@@ -658,8 +658,8 @@ function AddDialog({
     <DialogContent>
       <DialogHeader><DialogTitle>Add attendee</DialogTitle></DialogHeader>
       <div className="grid gap-3">
-        <div className="space-y-2"><Label className="text-sm">Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-        <div className="space-y-2">
+        <div className="space-y-4"><Label className="text-sm">Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div className="space-y-4">
           <Label className="text-sm">Ticket type</Label>
           <Select value={ticket} onValueChange={setTicket}>
             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -668,7 +668,7 @@ function AddDialog({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-4">
           <Label className="text-sm">Email (optional — pass is emailed)</Label>
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
         </div>
@@ -721,7 +721,7 @@ function BulkDialog({
       <p className="text-sm text-muted-foreground">
         Add up to {MAX} attendees at once. All share the selected ticket type — every attendee gets a unique signed pass.
       </p>
-      <div className="space-y-2">
+      <div className="space-y-4">
         <Label className="text-sm">Ticket type for this batch</Label>
         <Select value={sharedTicket} onValueChange={setSharedTicket}>
           <SelectTrigger><SelectValue /></SelectTrigger>
@@ -895,7 +895,7 @@ function ShareGatekeeperDialog({ eventId }: { eventId: string }) {
         Send these links to gate staff. Anyone with the link can scan and check in attendees for <strong>this event only</strong> — no login required, no access to your account or other events.
       </p>
       <div className="flex items-end gap-2">
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 space-y-4">
           <Label className="text-sm">Label</Label>
           <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Front door, Staff A…" />
         </div>
