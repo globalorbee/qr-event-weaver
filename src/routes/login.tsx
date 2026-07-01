@@ -79,11 +79,11 @@ function LoginPage() {
             </TabsList>
             {(["signin", "signup"] as const).map((mode) => (
               <TabsContent key={mode} value={mode} className="space-y-3 pt-4">
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <Label htmlFor={`${mode}-email`}>Email</Label>
                   <Input id={`${mode}-email`} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <Label htmlFor={`${mode}-pw`}>Password</Label>
                   <Input id={`${mode}-pw`} type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
