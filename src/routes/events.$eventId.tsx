@@ -593,12 +593,62 @@ function AttendeeCard({
   );
 }
 
+function AddAttendeeFlow({
+  ticketTypes,
+  onSingle,
+  onBulk,
+}: {
+  ticketTypes: string[];
+  onSingle: (name: string, ticket: string, email: string) => void;
+  onBulk: (text: string, sharedTicket: string) => void;
+}) {
+  const [mode, setMode] = useState<"choose" | "single" | "bulk">("choose");
+  if (mode === "choose") {
+    return (
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Add attendee</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">How would you like to add attendees?</p>
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setMode("single")}
+            className="group rounded-xl border border-border bg-card p-5 text-left transition-colors hover:border-primary/50"
+          >
+            <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Plus className="h-4 w-4" />
+            </div>
+            <p className="font-medium">Single attendee</p>
+            <p className="mt-1 text-sm text-muted-foreground">Add one person with name, ticket type, and email.</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("bulk")}
+            className="group rounded-xl border border-border bg-card p-5 text-left transition-colors hover:border-primary/50"
+          >
+            <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Upload className="h-4 w-4" />
+            </div>
+            <p className="font-medium">Bulk add</p>
+            <p className="mt-1 text-sm text-muted-foreground">Add up to 10 attendees sharing a ticket type.</p>
+          </button>
+        </div>
+      </DialogContent>
+    );
+  }
+  if (mode === "single") {
+    return <AddDialog ticketTypes={ticketTypes} onBack={() => setMode("choose")} onSubmit={onSingle} />;
+  }
+  return <BulkDialog ticketTypes={ticketTypes} onBack={() => setMode("choose")} onSubmit={onBulk} />;
+}
+
 function AddDialog({
   ticketTypes,
   onSubmit,
+  onBack,
 }: {
   ticketTypes: string[];
   onSubmit: (name: string, ticket: string, email: string) => void;
+  onBack?: () => void;
 }) {
   const safeTypes = ticketTypes.length ? ticketTypes : ["General"];
   const [name, setName] = useState("");
@@ -623,7 +673,10 @@ function AddDialog({
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" />
         </div>
       </div>
-      <DialogFooter><Button onClick={() => name && onSubmit(name, ticket, email)}>Add</Button></DialogFooter>
+      <DialogFooter>
+        {onBack && <Button variant="ghost" onClick={onBack}>Back</Button>}
+        <Button onClick={() => name && onSubmit(name, ticket, email)}>Add</Button>
+      </DialogFooter>
     </DialogContent>
   );
 }
@@ -631,9 +684,11 @@ function AddDialog({
 function BulkDialog({
   ticketTypes,
   onSubmit,
+  onBack,
 }: {
   ticketTypes: string[];
   onSubmit: (text: string, sharedTicket: string) => void;
+  onBack?: () => void;
 }) {
   const MAX = 10;
   const safeTypes = ticketTypes.length ? ticketTypes : ["General"];
