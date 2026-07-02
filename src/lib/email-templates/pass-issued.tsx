@@ -24,7 +24,9 @@ const PassIssuedEmail = ({
   brandColor = "#4F39F6",
   passUrl = "#",
   passImageUrl,
-}: Props) => (
+  organizerName,
+  eventSummary,
+}: Props & { organizerName?: string; eventSummary?: string }) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>Your pass for {eventName} is ready</Preview>
@@ -35,10 +37,21 @@ const PassIssuedEmail = ({
         </Section>
         <Heading style={h1}>Hi {attendeeName}, your pass is ready</Heading>
         <Text style={text}>
-          You're confirmed for <strong>{eventName}</strong>{eventDate ? ` on ${eventDate}` : ""}
-          {venue ? `, at ${venue}` : ""}.
+          You're officially confirmed for <strong>{eventName}</strong>
+          {eventDate ? ` taking place on ${eventDate}` : ""}
+          {venue ? ` at ${venue}` : ""}. We're excited to have you join us and can't wait
+          to welcome you at the door.
         </Text>
-        <Text style={meta}>Ticket type: <strong>{ticketType}</strong></Text>
+        <Text style={text}>
+          {eventSummary
+            ? eventSummary
+            : `This is a moment we've been building toward, and your presence makes it complete. Come ready to connect, learn, and share the experience with everyone else who'll be there.`}
+        </Text>
+        <Text style={text}>
+          Your ticket type is <strong>{ticketType}</strong>. Save this email or open your
+          pass below — the QR code inside is unique to you and is what our team will scan
+          at check-in. It can only be used once, so keep it safe.
+        </Text>
         {passImageUrl ? (
           <Section style={{ textAlign: "center", margin: "24px 0" }}>
             <Img src={passImageUrl} alt="Your event pass" width="320" style={{ borderRadius: 16, margin: "0 auto" }} />
@@ -50,7 +63,8 @@ const PassIssuedEmail = ({
           </Link>
         </Section>
         <Text style={footer}>
-          Present the QR code at the entrance — it's tied to your name and can only be scanned once.
+          {organizerName ? `Sent by ${organizerName} · ` : ""}Present the QR code at the
+          entrance. See you soon!
         </Text>
       </Container>
     </Body>
