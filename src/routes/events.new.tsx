@@ -390,7 +390,7 @@ function NewEvent() {
 
 function Field({ label, children, error }: { label: string; children: React.ReactNode; error?: string }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Label className="text-xs">{label}</Label>
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
