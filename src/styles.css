@@ -230,6 +230,7 @@
   flex-direction: column !important;
   gap: 16px !important;
   padding: 18px 0 !important;
+  text-align: center !important;
 }
 #qr-reader__dashboard_section_fsr,
 #qr-reader-public__dashboard_section_fsr,
@@ -274,6 +275,31 @@
 #qr-reader-public [id$="__dashboard_section_fsr"] span,
 #qr-reader__dashboard_section > div > div:has(#html5-qrcode-button-file-selection) span,
 #qr-reader-public__dashboard_section > div > div:has(#html5-qrcode-button-file-selection) span {
+  margin: 0 !important;
+  line-height: 1.45 !important;
+}
+#qr-reader__dashboard_section div[style*="border: 6px dashed"],
+#qr-reader-public__dashboard_section div[style*="border: 6px dashed"] {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: min(100%, 330px) !important;
+  max-width: 330px !important;
+  margin: 28px auto 0 !important;
+  padding: 24px 20px !important;
+  border: 1px dashed rgba(255, 255, 255, 0.42) !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.025) !important;
+}
+#qr-reader__dashboard_section div[style*="border: 6px dashed"] > label,
+#qr-reader-public__dashboard_section div[style*="border: 6px dashed"] > label {
+  display: block !important;
+  margin: 0 !important;
+}
+#qr-reader__dashboard_section div[style*="border: 6px dashed"] > div,
+#qr-reader-public__dashboard_section div[style*="border: 6px dashed"] > div {
   margin: 0 !important;
   line-height: 1.45 !important;
 }
