@@ -37,6 +37,8 @@ function PublicScanner() {
   const sync = useServerFn(syncScansByToken);
 
   useEffect(() => {
+    // Warm the scanner chunk in parallel with the context request.
+    import("html5-qrcode").catch(() => {});
     getCtx({ data: { token } })
       .then((r) => setCtx(r as Ctx))
       .catch((e) => setErr(e instanceof Error ? e.message : "Invalid link"));
