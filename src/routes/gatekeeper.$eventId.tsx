@@ -37,6 +37,9 @@ function Gatekeeper() {
     if (!loading && !user) navigate({ to: "/login" });
   }, [user, loading, navigate]);
 
+  // Warm the scanner chunk immediately so it's ready by the time the key loads.
+  useEffect(() => { import("html5-qrcode").catch(() => {}); }, []);
+
   useEffect(() => {
     if (typeof navigator !== "undefined") setOnline(navigator.onLine);
     const on = () => setOnline(true);
