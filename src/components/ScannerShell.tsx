@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle, WifiOff, Wifi, ScanLine } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 export type ScannerState =
   | { kind: "idle" }
@@ -46,6 +46,42 @@ export function ScannerShell({
     : state.kind === "invalid" ? "This pass couldn't be verified."
     : state.kind === "used" ? "This pass was scanned earlier."
     : "";
+
+  useEffect(() => {
+    const root = document.getElementById(readerId);
+    if (!root) return;
+
+    const styleUploadBox = () => {
+      const button = root.querySelector<HTMLButtonElement>("#html5-qrcode-button-file-selection");
+      const label = button?.closest("label") as HTMLElement | null;
+      const uploadBox = label?.parentElement;
+      if (!uploadBox) return;
+
+      uploadBox.style.setProperty("display", "flex", "important");
+      uploadBox.style.setProperty("flex-direction", "column", "important");
+      uploadBox.style.setProperty("align-items", "center", "important");
+      uploadBox.style.setProperty("justify-content", "center", "important");
+      uploadBox.style.setProperty("gap", "8px", "important");
+      uploadBox.style.setProperty("width", "min(100%, 330px)", "important");
+      uploadBox.style.setProperty("max-width", "330px", "important");
+      uploadBox.style.setProperty("margin", "28px auto 0", "important");
+      uploadBox.style.setProperty("padding", "24px 20px", "important");
+      uploadBox.style.setProperty("border", "1px dashed rgba(255, 255, 255, 0.42)", "important");
+      uploadBox.style.setProperty("border-radius", "14px", "important");
+      uploadBox.style.setProperty("background", "rgba(255, 255, 255, 0.025)", "important");
+      label.style.setProperty("display", "block", "important");
+      label.style.setProperty("margin", "0", "important");
+      uploadBox.querySelectorAll<HTMLElement>("div").forEach((el) => {
+        el.style.setProperty("margin", "0", "important");
+        el.style.setProperty("line-height", "1.45", "important");
+      });
+    };
+
+    styleUploadBox();
+    const observer = new MutationObserver(styleUploadBox);
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [readerId]);
 
   return (
     <div className="min-h-[100dvh] bg-black text-white">
