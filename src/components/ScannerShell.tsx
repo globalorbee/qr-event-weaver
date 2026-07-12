@@ -77,6 +77,9 @@ export function ScannerShell({
               </p>
             </div>
             {!ready && <p className="mb-3 text-center text-sm text-white/40">Loading…</p>}
+            {cameraError && (
+              <p className="mb-3 text-center text-sm text-red-400">{cameraError}</p>
+            )}
             <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-2">
               <div id={readerId} />
               <div className="pointer-events-none absolute inset-3 rounded-2xl">
