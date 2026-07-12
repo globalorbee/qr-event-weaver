@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import type { Html5Qrcode } from "html5-qrcode";
 import { useServerFn } from "@tanstack/react-start";
 import { getGatekeeperContext, syncScansByToken } from "@/lib/gatekeeper-token.functions";
 import { decodeSignedPass, verifySignedPass } from "@/lib/qr-crypto";
@@ -32,6 +33,7 @@ function PublicScanner() {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [online, setOnline] = useState(true);
   const [pending, setPending] = useState(0);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const lastScanRef = useRef<{ code: string; at: number }>({ code: "", at: 0 });
   const getCtx = useServerFn(getGatekeeperContext);
   const sync = useServerFn(syncScansByToken);
@@ -75,27 +77,47 @@ function PublicScanner() {
     return () => { cancelled = true; };
   }, [online, ctx, sync, token]);
 
+  // Start camera-only scanner using Html5Qrcode (no file upload UI).
   useEffect(() => {
     if (!ctx?.publicKey) return;
+    setCameraError(null);
     let stopped = false;
-    let scanner: { clear: () => Promise<void> } | null = null;
+    let scanner: Html5Qrcode | null = null;
     (async () => {
-      const { Html5QrcodeScanner } = await import("html5-qrcode");
-      if (stopped) return;
-      const s = new Html5QrcodeScanner(
-        "qr-reader-public",
-        { fps: 10, qrbox: { width: 260, height: 260 }, rememberLastUsedCamera: true },
-        false,
-      );
-      scanner = s as unknown as { clear: () => Promise<void> };
-      s.render(async (text) => {
-        const now = Date.now();
-        if (lastScanRef.current.code === text && now - lastScanRef.current.at < 1500) return;
-        lastScanRef.current = { code: text, at: now };
-        await handleScan(text);
-      }, () => {});
+      try {
+        const { Html5Qrcode } = await import("html5-qrcode");
+        if (stopped) return;
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras?.length) {
+          setCameraError("No camera found. Connect a camera and try again.");
+          return;
+        }
+        if (stopped) return;
+        const cameraId = cameras[0].id;
+        scanner = new Html5Qrcode("qr-reader-public");
+        await scanner.start(
+          cameraId,
+          { fps: 10, qrbox: { width: 260, height: 260 } },
+          async (text: string) => {
+            const now = Date.now();
+            if (lastScanRef.current.code === text && now - lastScanRef.current.at < 1500) return;
+            lastScanRef.current = { code: text, at: now };
+            await handleScan(text);
+          },
+          () => {},
+        );
+      } catch (e) {
+        if (!stopped) {
+          setCameraError(e instanceof Error ? e.message : "Camera failed to start");
+        }
+      }
     })();
-    return () => { stopped = true; if (scanner) scanner.clear().catch(() => {}); };
+    return () => {
+      stopped = true;
+      if (scanner) {
+        scanner.stop().catch(() => {}).then(() => scanner?.clear());
+      }
+    };
   }, [ctx?.publicKey, state.kind === "idle"]);
 
   const handleScan = async (text: string) => {
@@ -143,6 +165,7 @@ function PublicScanner() {
       onReset={() => setState({ kind: "idle" })}
       readerId="qr-reader-public"
       ready={!!ctx.publicKey}
+      cameraError={cameraError}
       header={
         <div className="min-w-0 truncate">
           <span className="font-display text-base font-semibold text-white">{ctx.eventName}</span>

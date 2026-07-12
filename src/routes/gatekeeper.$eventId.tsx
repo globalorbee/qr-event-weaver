@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import type { Html5Qrcode } from "html5-qrcode";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -29,7 +30,7 @@ function Gatekeeper() {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [online, setOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
-  const scannerRef = useRef<unknown>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const lastScanRef = useRef<{ code: string; at: number }>({ code: "", at: 0 });
   const sync = useServerFn(syncScans);
 
@@ -88,37 +89,49 @@ function Gatekeeper() {
     return () => { cancelled = true; window.removeEventListener("online", onOnline); };
   }, [online, sync]);
 
-  // Start scanner
+  // Start camera-only scanner using Html5Qrcode (no file upload UI).
   useEffect(() => {
     if (!user || !publicKey) return;
+    setCameraError(null);
     let stopped = false;
-    let scanner: { clear: () => Promise<void> } | null = null;
+    let scanner: Html5Qrcode | null = null;
 
     (async () => {
-      const { Html5QrcodeScanner } = await import("html5-qrcode");
-      if (stopped) return;
-      const s = new Html5QrcodeScanner(
-        "qr-reader",
-        { fps: 10, qrbox: { width: 260, height: 260 }, rememberLastUsedCamera: true },
-        false,
-      );
-      scanner = s as unknown as { clear: () => Promise<void> };
-      scannerRef.current = scanner;
-      s.render(
-        async (text) => {
-          const now = Date.now();
-          // debounce repeat scans (1.5s window)
-          if (lastScanRef.current.code === text && now - lastScanRef.current.at < 1500) return;
-          lastScanRef.current = { code: text, at: now };
-          await handleScan(text);
-        },
-        () => {},
-      );
+      try {
+        const { Html5Qrcode } = await import("html5-qrcode");
+        if (stopped) return;
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras?.length) {
+          setCameraError("No camera found. Connect a camera and try again.");
+          return;
+        }
+        if (stopped) return;
+        const cameraId = cameras[0].id;
+        scanner = new Html5Qrcode("qr-reader");
+        await scanner.start(
+          cameraId,
+          { fps: 10, qrbox: { width: 260, height: 260 } },
+          async (text: string) => {
+            const now = Date.now();
+            // debounce repeat scans (1.5s window)
+            if (lastScanRef.current.code === text && now - lastScanRef.current.at < 1500) return;
+            lastScanRef.current = { code: text, at: now };
+            await handleScan(text);
+          },
+          () => {},
+        );
+      } catch (e) {
+        if (!stopped) {
+          setCameraError(e instanceof Error ? e.message : "Camera failed to start");
+        }
+      }
     })();
 
     return () => {
       stopped = true;
-      if (scanner) scanner.clear().catch(() => {});
+      if (scanner) {
+        scanner.stop().catch(() => {}).then(() => scanner?.clear());
+      }
     };
   }, [user, publicKey]);
 
@@ -178,6 +191,7 @@ function Gatekeeper() {
       }
       readerId="qr-reader"
       ready={!!publicKey}
+      cameraError={cameraError}
     />
   );
 }
