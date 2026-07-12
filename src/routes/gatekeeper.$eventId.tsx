@@ -30,6 +30,7 @@ function Gatekeeper() {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [online, setOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const lastScanRef = useRef<{ code: string; at: number }>({ code: "", at: 0 });
   const sync = useServerFn(syncScans);
 
