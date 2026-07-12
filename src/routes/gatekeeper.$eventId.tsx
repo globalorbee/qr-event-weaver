@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import type { Html5Qrcode } from "html5-qrcode";
+import type { Html5QrcodeScanner } from "html5-qrcode";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -89,31 +89,24 @@ function Gatekeeper() {
     return () => { cancelled = true; window.removeEventListener("online", onOnline); };
   }, [online, sync]);
 
-  // Start camera-only scanner using Html5Qrcode (no file upload UI).
+  // Full scanner widget: camera + image file scan (swap link between them).
   useEffect(() => {
     if (!user || !publicKey) return;
     setCameraError(null);
     let stopped = false;
-    let scanner: Html5Qrcode | null = null;
-
+    let scanner: Html5QrcodeScanner | null = null;
     (async () => {
       try {
-        const { Html5Qrcode } = await import("html5-qrcode");
+        const { Html5QrcodeScanner } = await import("html5-qrcode");
         if (stopped) return;
-        const cameras = await Html5Qrcode.getCameras();
-        if (!cameras?.length) {
-          setCameraError("No camera found. Connect a camera and try again.");
-          return;
-        }
-        if (stopped) return;
-        const cameraId = cameras[0].id;
-        scanner = new Html5Qrcode("qr-reader");
-        await scanner.start(
-          cameraId,
-          { fps: 10, qrbox: { width: 260, height: 260 } },
+        scanner = new Html5QrcodeScanner(
+          "qr-reader",
+          { fps: 10, qrbox: { width: 260, height: 260 }, rememberLastUsedCamera: true, showTorchButtonIfSupported: true },
+          false,
+        );
+        scanner.render(
           async (text: string) => {
             const now = Date.now();
-            // debounce repeat scans (1.5s window)
             if (lastScanRef.current.code === text && now - lastScanRef.current.at < 1500) return;
             lastScanRef.current = { code: text, at: now };
             await handleScan(text);
@@ -121,17 +114,12 @@ function Gatekeeper() {
           () => {},
         );
       } catch (e) {
-        if (!stopped) {
-          setCameraError(e instanceof Error ? e.message : "Camera failed to start");
-        }
+        if (!stopped) setCameraError(e instanceof Error ? e.message : "Scanner failed to start");
       }
     })();
-
     return () => {
       stopped = true;
-      if (scanner) {
-        scanner.stop().catch(() => {}).then(() => scanner?.clear());
-      }
+      if (scanner) scanner.clear().catch(() => {});
     };
   }, [user, publicKey]);
 

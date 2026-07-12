@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import type { Html5Qrcode } from "html5-qrcode";
+import type { Html5QrcodeScanner } from "html5-qrcode";
 import { useServerFn } from "@tanstack/react-start";
 import { getGatekeeperContext, syncScansByToken } from "@/lib/gatekeeper-token.functions";
 import { decodeSignedPass, verifySignedPass } from "@/lib/qr-crypto";
@@ -77,27 +77,22 @@ function PublicScanner() {
     return () => { cancelled = true; };
   }, [online, ctx, sync, token]);
 
-  // Start camera-only scanner using Html5Qrcode (no file upload UI).
+  // Full scanner widget: camera + image file scan (swap link between them).
   useEffect(() => {
     if (!ctx?.publicKey) return;
     setCameraError(null);
     let stopped = false;
-    let scanner: Html5Qrcode | null = null;
+    let scanner: Html5QrcodeScanner | null = null;
     (async () => {
       try {
-        const { Html5Qrcode } = await import("html5-qrcode");
+        const { Html5QrcodeScanner } = await import("html5-qrcode");
         if (stopped) return;
-        const cameras = await Html5Qrcode.getCameras();
-        if (!cameras?.length) {
-          setCameraError("No camera found. Connect a camera and try again.");
-          return;
-        }
-        if (stopped) return;
-        const cameraId = cameras[0].id;
-        scanner = new Html5Qrcode("qr-reader-public");
-        await scanner.start(
-          cameraId,
-          { fps: 10, qrbox: { width: 260, height: 260 } },
+        scanner = new Html5QrcodeScanner(
+          "qr-reader-public",
+          { fps: 10, qrbox: { width: 260, height: 260 }, rememberLastUsedCamera: true, showTorchButtonIfSupported: true },
+          false,
+        );
+        scanner.render(
           async (text: string) => {
             const now = Date.now();
             if (lastScanRef.current.code === text && now - lastScanRef.current.at < 1500) return;
@@ -107,18 +102,14 @@ function PublicScanner() {
           () => {},
         );
       } catch (e) {
-        if (!stopped) {
-          setCameraError(e instanceof Error ? e.message : "Camera failed to start");
-        }
+        if (!stopped) setCameraError(e instanceof Error ? e.message : "Scanner failed to start");
       }
     })();
     return () => {
       stopped = true;
-      if (scanner) {
-        scanner.stop().catch(() => {}).then(() => scanner?.clear());
-      }
+      if (scanner) scanner.clear().catch(() => {});
     };
-  }, [ctx?.publicKey, state.kind === "idle"]);
+  }, [ctx?.publicKey]);
 
   const handleScan = async (text: string) => {
     if (!ctx?.publicKey) return;
