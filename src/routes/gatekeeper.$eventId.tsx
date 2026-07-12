@@ -102,7 +102,6 @@ function Gatekeeper() {
       if (stopped) return;
       const cameraId = cameras[0].id;
       scanner = new Html5Qrcode("qr-reader");
-      scannerRef.current = scanner;
       await scanner.start(
         cameraId,
         { fps: 10, qrbox: { width: 260, height: 260 } },
