@@ -191,6 +191,7 @@ function Gatekeeper() {
       }
       readerId="qr-reader"
       ready={!!publicKey}
+      cameraError={cameraError}
     />
   );
 }
