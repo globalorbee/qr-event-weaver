@@ -17,6 +17,7 @@ export function ScannerShell({
   readerId,
   ready,
   header,
+  cameraError,
   brandColor = "#4F39F6",
 }: {
   online: boolean;
@@ -27,6 +28,7 @@ export function ScannerShell({
   readerId: string;
   ready: boolean;
   header?: ReactNode;
+  cameraError?: string | null;
   brandColor?: string;
 }) {
   const accent =
