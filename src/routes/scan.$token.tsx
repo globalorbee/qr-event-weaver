@@ -76,27 +76,37 @@ function PublicScanner() {
     return () => { cancelled = true; };
   }, [online, ctx, sync, token]);
 
+  // Start camera-only scanner using Html5Qrcode (no file upload UI).
   useEffect(() => {
     if (!ctx?.publicKey) return;
     let stopped = false;
-    let scanner: { clear: () => Promise<void> } | null = null;
+    let scanner: Html5Qrcode | null = null;
     (async () => {
-      const { Html5QrcodeScanner } = await import("html5-qrcode");
+      const { Html5Qrcode } = await import("html5-qrcode");
       if (stopped) return;
-      const s = new Html5QrcodeScanner(
-        "qr-reader-public",
-        { fps: 10, qrbox: { width: 260, height: 260 }, rememberLastUsedCamera: true },
-        false,
+      const cameras = await Html5Qrcode.getCameras();
+      if (!cameras?.length) return;
+      if (stopped) return;
+      const cameraId = cameras[0].id;
+      scanner = new Html5Qrcode("qr-reader-public");
+      await scanner.start(
+        cameraId,
+        { fps: 10, qrbox: { width: 260, height: 260 } },
+        async (text) => {
+          const now = Date.now();
+          if (lastScanRef.current.code === text && now - lastScanRef.current.at < 1500) return;
+          lastScanRef.current = { code: text, at: now };
+          await handleScan(text);
+        },
+        () => {},
       );
-      scanner = s as unknown as { clear: () => Promise<void> };
-      s.render(async (text) => {
-        const now = Date.now();
-        if (lastScanRef.current.code === text && now - lastScanRef.current.at < 1500) return;
-        lastScanRef.current = { code: text, at: now };
-        await handleScan(text);
-      }, () => {});
     })();
-    return () => { stopped = true; if (scanner) scanner.clear().catch(() => {}); };
+    return () => {
+      stopped = true;
+      if (scanner) {
+        scanner.stop().catch(() => {}).then(() => scanner?.clear());
+      }
+    };
   }, [ctx?.publicKey, state.kind === "idle"]);
 
   const handleScan = async (text: string) => {
