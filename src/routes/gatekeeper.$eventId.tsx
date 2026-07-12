@@ -92,29 +92,39 @@ function Gatekeeper() {
   // Start camera-only scanner using Html5Qrcode (no file upload UI).
   useEffect(() => {
     if (!user || !publicKey) return;
+    setCameraError(null);
     let stopped = false;
     let scanner: Html5Qrcode | null = null;
 
     (async () => {
-      const { Html5Qrcode } = await import("html5-qrcode");
-      if (stopped) return;
-      const cameras = await Html5Qrcode.getCameras();
-      if (!cameras?.length) return;
-      if (stopped) return;
-      const cameraId = cameras[0].id;
-      scanner = new Html5Qrcode("qr-reader");
-      await scanner.start(
-        cameraId,
-        { fps: 10, qrbox: { width: 260, height: 260 } },
-        async (text) => {
-          const now = Date.now();
-          // debounce repeat scans (1.5s window)
-          if (lastScanRef.current.code === text && now - lastScanRef.current.at < 1500) return;
-          lastScanRef.current = { code: text, at: now };
-          await handleScan(text);
-        },
-        () => {},
-      );
+      try {
+        const { Html5Qrcode } = await import("html5-qrcode");
+        if (stopped) return;
+        const cameras = await Html5Qrcode.getCameras();
+        if (!cameras?.length) {
+          setCameraError("No camera found. Connect a camera and try again.");
+          return;
+        }
+        if (stopped) return;
+        const cameraId = cameras[0].id;
+        scanner = new Html5Qrcode("qr-reader");
+        await scanner.start(
+          cameraId,
+          { fps: 10, qrbox: { width: 260, height: 260 } },
+          async (text: string) => {
+            const now = Date.now();
+            // debounce repeat scans (1.5s window)
+            if (lastScanRef.current.code === text && now - lastScanRef.current.at < 1500) return;
+            lastScanRef.current = { code: text, at: now };
+            await handleScan(text);
+          },
+          () => {},
+        );
+      } catch (e) {
+        if (!stopped) {
+          setCameraError(e instanceof Error ? e.message : "Camera failed to start");
+        }
+      }
     })();
 
     return () => {
