@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import type { Html5Qrcode } from "html5-qrcode";
 import { useServerFn } from "@tanstack/react-start";
 import { getGatekeeperContext, syncScansByToken } from "@/lib/gatekeeper-token.functions";
 import { decodeSignedPass, verifySignedPass } from "@/lib/qr-crypto";
