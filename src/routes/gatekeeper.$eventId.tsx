@@ -88,23 +88,24 @@ function Gatekeeper() {
     return () => { cancelled = true; window.removeEventListener("online", onOnline); };
   }, [online, sync]);
 
-  // Start scanner
+  // Start camera-only scanner using Html5Qrcode (no file upload UI).
   useEffect(() => {
     if (!user || !publicKey) return;
     let stopped = false;
-    let scanner: { clear: () => Promise<void> } | null = null;
+    let scanner: Html5Qrcode | null = null;
 
     (async () => {
-      const { Html5QrcodeScanner } = await import("html5-qrcode");
+      const { Html5Qrcode } = await import("html5-qrcode");
       if (stopped) return;
-      const s = new Html5QrcodeScanner(
-        "qr-reader",
-        { fps: 10, qrbox: { width: 260, height: 260 }, rememberLastUsedCamera: true },
-        false,
-      );
-      scanner = s as unknown as { clear: () => Promise<void> };
+      const cameras = await Html5Qrcode.getCameras();
+      if (!cameras?.length) return;
+      if (stopped) return;
+      const cameraId = cameras[0].id;
+      scanner = new Html5Qrcode("qr-reader");
       scannerRef.current = scanner;
-      s.render(
+      await scanner.start(
+        cameraId,
+        { fps: 10, qrbox: { width: 260, height: 260 } },
         async (text) => {
           const now = Date.now();
           // debounce repeat scans (1.5s window)
@@ -118,7 +119,9 @@ function Gatekeeper() {
 
     return () => {
       stopped = true;
-      if (scanner) scanner.clear().catch(() => {});
+      if (scanner) {
+        scanner.stop().catch(() => {}).then(() => scanner?.clear());
+      }
     };
   }, [user, publicKey]);
 
