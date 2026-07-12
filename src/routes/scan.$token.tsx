@@ -165,6 +165,7 @@ function PublicScanner() {
       onReset={() => setState({ kind: "idle" })}
       readerId="qr-reader-public"
       ready={!!ctx.publicKey}
+      cameraError={cameraError}
       header={
         <div className="min-w-0 truncate">
           <span className="font-display text-base font-semibold text-white">{ctx.eventName}</span>
