@@ -192,7 +192,7 @@
 }
 
 /* ------------------------------------------------------------------
- * html5-qrcode camera-only scanner — clean container and video.
+ * html5-qrcode scanner — clean container, thin file-drop border, spacious UI.
  * ------------------------------------------------------------------ */
 #qr-reader,
 #qr-reader-public {
@@ -213,6 +213,66 @@
 #qr-reader canvas,
 #qr-reader-public canvas {
   display: block !important;
+}
+
+#qr-reader__scan_region,
+#qr-reader-public__scan_region {
+  min-height: 168px !important;
+  padding: 26px 0 18px !important;
+}
+
+#qr-reader__dashboard,
+#qr-reader-public__dashboard {
+  margin-top: 18px !important;
+}
+
+#qr-reader__dashboard_section,
+#qr-reader-public__dashboard_section {
+  padding: 18px 0 20px !important;
+}
+
+#qr-reader__dashboard_section > div,
+#qr-reader-public__dashboard_section > div {
+  display: grid !important;
+  gap: 18px !important;
+  justify-items: center !important;
+}
+
+#qr-reader__dashboard_section div[style*="dashed"],
+#qr-reader-public__dashboard_section div[style*="dashed"] {
+  width: min(100%, 304px) !important;
+  border: 1px dashed color-mix(in oklab, var(--foreground) 52%, transparent) !important;
+  border-radius: 16px !important;
+  padding: 20px 18px !important;
+  margin: 0 auto !important;
+  background: color-mix(in oklab, var(--foreground) 4%, transparent) !important;
+}
+
+#qr-reader__dashboard_section div[style*="dashed"] label,
+#qr-reader-public__dashboard_section div[style*="dashed"] label {
+  margin-bottom: 14px !important;
+}
+
+#html5-qrcode-button-file-selection,
+#html5-qrcode-button-camera-permission,
+#html5-qrcode-button-camera-start,
+#html5-qrcode-button-camera-stop,
+#html5-qrcode-button-torch {
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  padding: 12px 18px !important;
+  font: inherit !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+#html5-qrcode-anchor-scan-type-change {
+  display: inline-block;
+  margin-top: 4px !important;
+  color: color-mix(in oklab, var(--foreground) 82%, transparent) !important;
+  text-underline-offset: 4px !important;
 }
 
 /* ------------------------------------------------------------------
