@@ -241,11 +241,11 @@
 #qr-reader__dashboard_section div[style*="dashed"],
 #qr-reader-public__dashboard_section div[style*="dashed"] {
   width: min(100%, 304px) !important;
-  border: 1px dashed color-mix(in oklab, var(--foreground) 52%, transparent) !important;
+  border: 1px dashed color-mix(in oklab, currentColor 52%, transparent) !important;
   border-radius: 16px !important;
   padding: 20px 18px !important;
   margin: 0 auto !important;
-  background: color-mix(in oklab, var(--foreground) 4%, transparent) !important;
+  background: color-mix(in oklab, currentColor 4%, transparent) !important;
 }
 
 #qr-reader__dashboard_section div[style*="dashed"] label,
@@ -271,7 +271,7 @@
 #html5-qrcode-anchor-scan-type-change {
   display: inline-block;
   margin-top: 4px !important;
-  color: color-mix(in oklab, var(--foreground) 82%, transparent) !important;
+  color: color-mix(in oklab, currentColor 82%, transparent) !important;
   text-underline-offset: 4px !important;
 }
 
