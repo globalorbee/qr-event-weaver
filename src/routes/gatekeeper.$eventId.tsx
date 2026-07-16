@@ -91,7 +91,7 @@ function Gatekeeper() {
 
   // Full scanner widget: camera + image file scan (swap link between them).
   useEffect(() => {
-    if (!user || !publicKey) return;
+    if (!user) return;
     setCameraError(null);
     let stopped = false;
     let scanner: Html5QrcodeScanner | null = null;
@@ -121,7 +121,7 @@ function Gatekeeper() {
       stopped = true;
       if (scanner) scanner.clear().catch(() => {});
     };
-  }, [user, publicKey]);
+  }, [user]);
 
   const handleScan = async (text: string) => {
     if (!publicKey) return;
@@ -178,7 +178,7 @@ function Gatekeeper() {
         </Link>
       }
       readerId="qr-reader"
-      ready={!!publicKey}
+      ready={true}
       cameraError={cameraError}
     />
   );

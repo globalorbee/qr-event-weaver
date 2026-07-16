@@ -215,6 +215,16 @@
   display: block !important;
 }
 
+/* Hide html5-qrcode's built-in phone/gallery icons in the dashboard */
+#qr-reader img,
+#qr-reader-public img,
+#qr-reader__dashboard img,
+#qr-reader-public__dashboard img,
+#qr-reader__dashboard_section img,
+#qr-reader-public__dashboard_section img {
+  display: none !important;
+}
+
 #qr-reader__scan_region,
 #qr-reader-public__scan_region {
   min-height: 168px !important;
