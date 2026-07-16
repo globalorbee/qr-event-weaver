@@ -66,30 +66,30 @@ export function ScannerShell({
         </div>
 
         {state.kind === "idle" ? (
-          <div className="mt-6 flex flex-1 flex-col">
-            <div className="mb-4 text-center">
-              <div className="mx-auto mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 ring-1 ring-primary/30">
+          <div className="mt-8 flex flex-1 flex-col">
+            <div className="mb-6 text-center">
+              <div className="mx-auto mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 ring-1 ring-primary/30">
                 <ScanLine className="h-5 w-5 text-primary" />
               </div>
               <h1 className="font-display text-2xl font-semibold">Scan a pass</h1>
-              <p className="mt-1 text-sm text-white/50">
+              <p className="mt-2 text-sm text-white/50">
                 Point the camera at the attendee's QR code
               </p>
             </div>
-            {!ready && <p className="mb-3 text-center text-sm text-white/40">Loading…</p>}
+            {!ready && <p className="mb-4 text-center text-sm text-white/40">Loading…</p>}
             {cameraError && (
-              <p className="mb-3 text-center text-sm text-red-400">{cameraError}</p>
+              <p className="mb-4 text-center text-sm text-red-400">{cameraError}</p>
             )}
-            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-2">
+            <div className="peras-scanner-frame relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-5">
               <div id={readerId} />
-              <div className="pointer-events-none absolute inset-3 rounded-2xl">
+              <div className="pointer-events-none absolute inset-5 rounded-2xl">
                 <span className="absolute left-0 top-0 h-6 w-6 rounded-tl-xl border-l-2 border-t-2 border-primary" />
                 <span className="absolute right-0 top-0 h-6 w-6 rounded-tr-xl border-r-2 border-t-2 border-primary" />
                 <span className="absolute bottom-0 left-0 h-6 w-6 rounded-bl-xl border-b-2 border-l-2 border-primary" />
                 <span className="absolute bottom-0 right-0 h-6 w-6 rounded-br-xl border-b-2 border-r-2 border-primary" />
               </div>
             </div>
-            <p className="mt-4 text-center text-xs text-white/35">
+            <p className="mt-6 text-center text-xs text-white/35">
               Hold steady — passes verify automatically
             </p>
           </div>
