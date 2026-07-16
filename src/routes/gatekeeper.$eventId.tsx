@@ -178,7 +178,7 @@ function Gatekeeper() {
         </Link>
       }
       readerId="qr-reader"
-      ready={!!publicKey}
+      ready={true}
       cameraError={cameraError}
     />
   );
